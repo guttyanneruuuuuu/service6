@@ -66,19 +66,22 @@ function initLanding() {
 
   document.getElementById('heroEnter').addEventListener('click', () => openPicker());
   document.getElementById('navCta').addEventListener('click', () => openPicker());
+  document.getElementById('heroWaitlist').addEventListener('click', () => openWaitlist('creator-rooms'));
   document.getElementById('heroHow').addEventListener('click', () => {
     document.getElementById('how').scrollIntoView({ behavior: 'smooth' });
   });
   document.getElementById('proCta').addEventListener('click', () => {
-    showToast('Waitlist joined. We\'ll email you when doors open.');
+    openWaitlist('door-pass');
   });
 
   // Live-ish stats
   document.getElementById('statPlaces').textContent = PLACES.length;
   document.getElementById('statOnline').textContent = simulateOnlineCount();
+  document.getElementById('statDoorsToday').textContent = simulateDoorOpensToday();
 
   // Picker wiring
   initPicker();
+  initWaitlist();
 }
 
 function buildHeroBg() {
@@ -108,6 +111,13 @@ function simulateOnlineCount() {
   // Deterministic-ish, nice-looking fake number seeded by hour
   const base = 37 + ((new Date().getHours() * 13) % 26);
   return base + Math.floor(Math.random() * 8);
+}
+
+function simulateDoorOpensToday() {
+  const d = new Date();
+  const daySeed = d.getUTCDate() + d.getUTCMonth() * 31;
+  const opens = 900 + ((daySeed * 137) % 1200);
+  return opens.toLocaleString('en-US');
 }
 
 function renderPlacesGrid(host, places) {
@@ -200,6 +210,64 @@ function closePicker() {
   document.body.style.overflow = '';
 }
 
+/* ---------- Waitlist ---------- */
+function initWaitlist() {
+  const waitlist = document.getElementById('waitlist');
+  const form = document.getElementById('waitlistForm');
+  const email = document.getElementById('waitlistEmail');
+
+  waitlist.querySelectorAll('[data-waitlist-close]').forEach((el) => {
+    el.addEventListener('click', () => closeWaitlist());
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const plan = document.getElementById('waitlistPlan').value;
+    const mail = (email.value || '').trim();
+    if (!mail) return;
+
+    const entries = loadWaitlistEntries();
+    entries.unshift({
+      email: mail,
+      plan,
+      ts: Date.now(),
+    });
+    try { localStorage.setItem('zeropoint.waitlist', JSON.stringify(entries.slice(0, 100))); } catch {}
+
+    closeWaitlist();
+    showToast(`Saved. You're in the ${plan.replace('-', ' ')} queue.`);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !waitlist.hidden) closeWaitlist();
+  });
+}
+
+function loadWaitlistEntries() {
+  try {
+    const data = JSON.parse(localStorage.getItem('zeropoint.waitlist') || '[]');
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+function openWaitlist(plan = 'door-pass') {
+  const waitlist = document.getElementById('waitlist');
+  const planEl = document.getElementById('waitlistPlan');
+  const emailEl = document.getElementById('waitlistEmail');
+  if (planEl) planEl.value = plan;
+  waitlist.hidden = false;
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => emailEl?.focus(), 20);
+}
+
+function closeWaitlist() {
+  const waitlist = document.getElementById('waitlist');
+  waitlist.hidden = true;
+  document.body.style.overflow = '';
+}
+
 /* ---------- Onboard ---------- */
 function ensureOnboarded() {
   return new Promise((resolve) => {
@@ -258,10 +326,12 @@ async function teleportTo(placeId) {
 
   // Teleport overlay
   const overlay = document.getElementById('teleport');
-  document.getElementById('teleportLabel').textContent = `Opening ${place.name}`;
+  document.getElementById('teleportLabel').textContent = `Turning the handle to ${place.name}`;
   overlay.hidden = false;
+  overlay.classList.remove('teleport--active');
   // force reflow so animation restarts each call
   void overlay.offsetWidth;
+  overlay.classList.add('teleport--active');
   overlay.querySelector('.teleport__rings').style.animation = 'none';
   overlay.querySelector('.teleport__flash').style.animation = 'none';
   overlay.querySelector('.teleport__label').style.animation = 'none';
@@ -293,7 +363,10 @@ async function teleportTo(placeId) {
   await startRoom(place.id);
 
   // Dismiss teleport overlay
-  setTimeout(() => { overlay.hidden = true; }, 1300);
+  setTimeout(() => {
+    overlay.hidden = true;
+    overlay.classList.remove('teleport--active');
+  }, 1500);
 
   showToast(`Arrived at ${place.name}`);
 }
@@ -457,7 +530,10 @@ function maybeAutoJoinFromURL() {
 
 /* ---------- Toast ---------- */
 function showToast(msg) {
-  const el = document.getElementById('sceneToast');
+  const sceneEl = document.getElementById('sceneToast');
+  const globalEl = document.getElementById('globalToast');
+  const inScene = STATE.currentPlaceId && !document.getElementById('scene')?.hidden;
+  const el = inScene ? sceneEl : globalEl;
   if (!el) return;
   el.textContent = msg;
   el.hidden = false;

@@ -44,6 +44,8 @@
         <div class="nav__links">
           <a href="#how" class="nav__link">How it works</a>
           <a href="#places" class="nav__link">Places</a>
+          <a href="#compare" class="nav__link">Why not Maps?</a>
+          <a href="#economy" class="nav__link">Economy</a>
           <a href="#pro" class="nav__link">Pro</a>
           <button class="nav__cta" id="navCta">Open the Door</button>
         </div>
@@ -56,7 +58,7 @@
         <div class="hero__content">
           <div class="hero__tag">
             <span class="pulse"></span>
-            <span>Real-time · P2P · No downloads</span>
+            <span>Real-time presence engine · P2P · No downloads</span>
           </div>
           <h1 class="hero__title">
             Step through<br/>
@@ -71,11 +73,12 @@
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             </button>
             <button class="btn btn--ghost" id="heroHow">How it works</button>
+            <button class="btn btn--ghost" id="heroWaitlist">Join Creator waitlist</button>
           </div>
           <div class="hero__stats">
             <div class="stat"><b id="statPlaces">—</b><span>places</span></div>
             <div class="stat"><b id="statOnline">—</b><span>travellers online</span></div>
-            <div class="stat"><b>0¥</b><span>forever free</span></div>
+            <div class="stat"><b id="statDoorsToday">—</b><span>doors opened today</span></div>
           </div>
         </div>
 
@@ -112,22 +115,87 @@
       <section id="places" class="places">
         <div class="places__head">
           <h2 class="section__title">Today's doors</h2>
-          <p class="section__sub">Handpicked locations. More added every week.</p>
+          <p class="section__sub">Handpicked locations with social energy, mission rewards, and room-level live presence.</p>
         </div>
         <div class="places__grid" id="placesGrid"></div>
+      </section>
+
+      <section id="compare" class="compare">
+        <div class="compare__head">
+          <h2 class="section__title">More than a panorama</h2>
+          <p class="section__sub">Maps show a place. Zeropoint turns it into a room.</p>
+        </div>
+        <div class="compare__grid">
+          <article class="compare__card">
+            <h3>Google Earth style viewers</h3>
+            <ul>
+              <li>Mostly solo browsing</li>
+              <li>Weak creator monetization</li>
+              <li>No room-native social layer</li>
+            </ul>
+          </article>
+          <article class="compare__card compare__card--accent">
+            <h3>Zeropoint Door Rooms</h3>
+            <ul>
+              <li>Live co-presence in every door</li>
+              <li>Creator doors with paid unlocks</li>
+              <li>Missions, badges, and replay loops</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="economy" class="economy">
+        <div class="economy__head">
+          <h2 class="section__title">Door economy</h2>
+          <p class="section__sub">Designed to monetize creators, brands, and premium travellers without breaking the free core.</p>
+        </div>
+        <div class="economy__grid">
+          <article class="economy__item">
+            <div class="economy__kicker">PASS</div>
+            <h3>Door Pass</h3>
+            <p>Monthly pass that unlocks private rooms, HD texture streams, and passport streak boosts.</p>
+            <div class="economy__price">¥480/mo</div>
+          </article>
+          <article class="economy__item">
+            <div class="economy__kicker">CREATOR</div>
+            <h3>Creator Rooms</h3>
+            <p>Upload your own 360 places, set ticketed events, and receive payout share from paid entries.</p>
+            <div class="economy__price">¥1,980/mo</div>
+          </article>
+          <article class="economy__item">
+            <div class="economy__kicker">BRAND</div>
+            <h3>Sponsored Doors</h3>
+            <p>Limited sponsored placements with launch analytics and branded collectible missions.</p>
+            <div class="economy__price">from ¥80,000</div>
+          </article>
+        </div>
       </section>
 
       <section id="pro" class="pro">
         <div class="pro__card">
           <div class="pro__badge">ZEROPOINT PRO</div>
-          <h2>Own a door.</h2>
-          <p>Upload your own 360° place. Give it a permanent URL. Invite the world through it. Part of every Pro subscription funds the next generation of spatial technology research.</p>
+          <h2>Own the room, not just the image.</h2>
+          <p>Run paid creator doors, host ticketed sessions, and launch collectible mission drops. Part of every Pro subscription funds next-generation spatial technology research.</p>
           <div class="pro__price">
             <span class="pro__amount">¥480</span>
             <span class="pro__period">/ month</span>
           </div>
-          <button class="btn btn--primary" id="proCta">Join the waitlist</button>
+          <button class="btn btn--primary" id="proCta">Start Pro waitlist</button>
           <div class="pro__meta">Early supporters get a lifetime price-lock.</div>
+        </div>
+      </section>
+
+      <section class="mission" id="mission">
+        <div class="mission__card">
+          <div class="mission__badge">DAILY LOOP</div>
+          <h2>Passport missions</h2>
+          <p>Open 3 unique doors, leave 1 reaction, and meet 1 new traveller to complete your daily mission and keep your streak alive.</p>
+          <div class="mission__row">
+            <div class="mission__pill">+35 XP</div>
+            <div class="mission__pill">1 Door Key</div>
+            <div class="mission__pill">Streak Multiplier</div>
+          </div>
         </div>
       </section>
 
@@ -167,6 +235,11 @@
 
     <!-- Teleport transition layer -->
     <div id="teleport" class="teleport" hidden>
+      <div class="teleport__door">
+        <div class="teleport__doorFrame"></div>
+        <div class="teleport__doorLeaf"></div>
+        <div class="teleport__doorHandle"></div>
+      </div>
       <div class="teleport__rings"></div>
       <div class="teleport__flash"></div>
       <div class="teleport__label" id="teleportLabel">Opening the door…</div>
@@ -247,6 +320,30 @@
         <button class="btn btn--primary" id="onboardGo">Step through</button>
       </div>
     </div>
+
+    <div id="waitlist" class="waitlist" hidden>
+      <div class="waitlist__overlay" data-waitlist-close></div>
+      <div class="waitlist__panel">
+        <div class="waitlist__head">
+          <h2>Join the monetization beta</h2>
+          <button class="icon-btn" data-waitlist-close aria-label="Close">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <p>Get early access to Door Pass, Creator Rooms, and Sponsored Doors.</p>
+        <form id="waitlistForm" class="waitlist__form">
+          <input id="waitlistEmail" type="email" placeholder="you@example.com" required />
+          <select id="waitlistPlan">
+            <option value="door-pass">Door Pass</option>
+            <option value="creator-rooms">Creator Rooms</option>
+            <option value="sponsored-doors">Sponsored Doors</option>
+          </select>
+          <button class="btn btn--primary" type="submit">Reserve my slot</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="globalToast" class="global-toast" hidden></div>
 
     <script type="module" src="./src/main.js"></script>
   </body>
