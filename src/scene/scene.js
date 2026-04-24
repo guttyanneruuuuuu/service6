@@ -47,7 +47,7 @@ export class ZeropointScene {
     this._buildStars();
     this._buildGround();
     this._buildPanoSphere();
-    this._buildAmbientLights();
+    this._buildLights();
 
     this._hudPeers = []; // DOM refs for labels/bubbles
 
@@ -104,24 +104,35 @@ export class ZeropointScene {
   }
 
   _buildGround() {
-    // Subtle reflective disc so avatars have somewhere to stand
-    const g = new THREE.CircleGeometry(40, 64);
-    const m = new THREE.MeshBasicMaterial({
+    // High-end reflective ground with layered textures
+    const g = new THREE.CircleGeometry(60, 128);
+    const m = new THREE.MeshStandardMaterial({
       color: 0x0a0d14,
+      roughness: 0.15,
+      metalness: 0.6,
       transparent: true,
-      opacity: 0.55,
+      opacity: 0.85,
     });
     this.ground = new THREE.Mesh(g, m);
     this.ground.rotation.x = -Math.PI / 2;
     this.ground.position.y = -2.2;
+    this.ground.receiveShadow = true;
     this.scene.add(this.ground);
 
-    // Grid lines
-    const grid = new THREE.GridHelper(80, 40, 0x7ce7ff, 0x1a2030);
+    // Dynamic Grid with bloom-like effect
+    const grid = new THREE.GridHelper(120, 60, 0x7ce7ff, 0x1a2030);
     grid.material.transparent = true;
-    grid.material.opacity = 0.18;
-    grid.position.y = -2.19;
+    grid.material.opacity = 0.25;
+    grid.position.y = -2.195;
     this.scene.add(grid);
+    
+    // Additional glowing ring for orientation
+    const ringGeom = new THREE.RingGeometry(5.8, 6, 64);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0x7ce7ff, transparent: true, opacity: 0.1, side: THREE.DoubleSide });
+    const ring = new THREE.Mesh(ringGeom, ringMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = -2.19;
+    this.scene.add(ring);
   }
 
   _buildPanoSphere() {
@@ -176,12 +187,31 @@ export class ZeropointScene {
     this.scene.add(this.fade);
   }
 
-  _buildAmbientLights() {
-    const amb = new THREE.AmbientLight(0xffffff, 0.7);
+  _buildLights() {
+    // Cinematic Lighting System
+    const amb = new THREE.AmbientLight(0xffffff, 0.4);
     this.scene.add(amb);
-    const dir = new THREE.DirectionalLight(0x7ce7ff, 0.5);
-    dir.position.set(5, 10, 5);
+
+    const hemi = new THREE.HemisphereLight(0x7ce7ff, 0x080a12, 0.6);
+    this.scene.add(hemi);
+
+    const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+    dir.position.set(10, 20, 10);
+    dir.castShadow = true;
+    dir.shadow.mapSize.width = 2048;
+    dir.shadow.mapSize.height = 2048;
+    dir.shadow.camera.near = 0.5;
+    dir.shadow.camera.far = 50;
     this.scene.add(dir);
+
+    // Point lights for "magical" atmosphere
+    const p1 = new THREE.PointLight(0x7ce7ff, 15, 20);
+    p1.position.set(-8, 5, -8);
+    this.scene.add(p1);
+
+    const p2 = new THREE.PointLight(0xb878ff, 12, 20);
+    p2.position.set(8, 3, 8);
+    this.scene.add(p2);
   }
 
   /* ---------------- place swap ---------------- */
