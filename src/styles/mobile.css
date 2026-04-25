@@ -1,0 +1,795 @@
+/* ============================================================
+   ZEROPOINT MOBILE — Touch-First, App-Like Experience
+   ============================================================ */
+
+/* Mobile Viewport Fixes */
+@supports (height: 100dvh) {
+  html, body {
+    height: 100dvh;
+  }
+}
+
+/* Touch-Optimized Base */
+@media (max-width: 1024px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    font-size: 16px; /* Prevents zoom on input focus */
+  }
+
+  button, a, input {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
+
+/* ============================================================
+   MOBILE NAVIGATION — Bottom Dock
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .nav-dock {
+    position: fixed;
+    bottom: 20px;
+    top: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(3, 4, 7, 0.8);
+    backdrop-filter: blur(32px) saturate(200%);
+    -webkit-backdrop-filter: blur(32px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    max-width: calc(100% - 40px);
+    animation: dockInMobile 0.6s var(--ease) both;
+  }
+
+  @keyframes dockInMobile {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(60px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  .nav-dock__logo {
+    display: none;
+  }
+
+  .nav-dock__links {
+    display: flex;
+    gap: 12px;
+  }
+
+  .nav-dock__link {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: all 0.3s var(--ease);
+  }
+
+  .nav-dock__link::after {
+    display: none;
+  }
+
+  .nav-dock__link:active {
+    background: rgba(124, 231, 255, 0.1);
+    color: var(--accent);
+  }
+
+  .nav-dock__cta {
+    padding: 8px 16px;
+    font-size: 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+}
+
+/* ============================================================
+   HERO SECTION — Mobile Optimization
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .hero-immersive {
+    flex-direction: column;
+    padding: 40px 20px;
+    min-height: 100dvh;
+    justify-content: center;
+  }
+
+  .hero-immersive__content {
+    max-width: 100%;
+    order: 2;
+    margin-top: 40px;
+  }
+
+  .hero-immersive__preheading {
+    font-size: 11px;
+    padding: 8px 12px;
+  }
+
+  .hero-immersive__title {
+    font-size: clamp(32px, 10vw, 48px);
+    line-height: 1.15;
+    margin-bottom: 20px;
+  }
+
+  .hero-immersive__description {
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 32px;
+  }
+
+  .hero-immersive__stats {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+    padding-bottom: 32px;
+  }
+
+  .stat-card__number {
+    font-size: 24px;
+  }
+
+  .btn-hero {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 24px;
+    font-size: 14px;
+  }
+
+  .hero-immersive__visual {
+    order: 1;
+    min-height: 300px;
+    margin-bottom: 20px;
+  }
+
+  .door-hero {
+    width: min(300px, 90vw);
+  }
+}
+
+/* ============================================================
+   EXPERIENCE SECTION — Mobile Cards
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .experience-section {
+    padding: 60px 20px;
+  }
+
+  .experience-section__header {
+    margin-bottom: 40px;
+  }
+
+  .experience-section__header h2 {
+    font-size: 32px;
+  }
+
+  .experience-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .experience-card {
+    padding: 24px;
+  }
+
+  .experience-card__number {
+    font-size: 36px;
+  }
+
+  .experience-card h3 {
+    font-size: 18px;
+  }
+
+  .experience-card p {
+    font-size: 14px;
+  }
+
+  .experience-card__icon {
+    font-size: 36px;
+  }
+}
+
+/* ============================================================
+   PLACES SHOWCASE — Mobile Grid
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .places-showcase {
+    padding: 60px 20px;
+  }
+
+  .places-showcase__header {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .places-showcase__header h2 {
+    font-size: 32px;
+  }
+
+  .places-showcase__header p {
+    font-size: 14px;
+  }
+
+  .places-showcase__grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  .place-card {
+    aspect-ratio: 4 / 5;
+  }
+}
+
+/* ============================================================
+   FEATURES SECTION — Mobile Stack
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .features-section {
+    padding: 60px 20px;
+  }
+
+  .features-section h2 {
+    font-size: 32px;
+    margin-bottom: 40px;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .feature-item {
+    padding: 24px;
+  }
+
+  .feature-item__icon {
+    font-size: 36px;
+  }
+
+  .feature-item h3 {
+    font-size: 18px;
+  }
+
+  .feature-item p {
+    font-size: 14px;
+  }
+}
+
+/* ============================================================
+   PRICING SECTION — Mobile Cards
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .pricing-section {
+    padding: 60px 20px;
+  }
+
+  .pricing-section h2 {
+    font-size: 32px;
+  }
+
+  .pricing-section > p {
+    font-size: 14px;
+    margin-bottom: 40px;
+  }
+
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .pricing-card {
+    padding: 24px;
+  }
+
+  .pricing-card--featured {
+    transform: scale(1);
+  }
+
+  .pricing-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .pricing-card--featured:hover {
+    transform: translateY(-4px);
+  }
+
+  .pricing-card h3 {
+    font-size: 20px;
+  }
+
+  .pricing-card__price {
+    font-size: 28px;
+  }
+
+  .pricing-card__features li {
+    font-size: 13px;
+  }
+}
+
+/* ============================================================
+   CTA SECTION — Mobile
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .cta-section {
+    padding: 60px 20px;
+  }
+
+  .cta-section__content h2 {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+
+  .cta-section__content p {
+    font-size: 14px;
+    margin-bottom: 32px;
+  }
+
+  .btn-large {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 14px;
+  }
+}
+
+/* ============================================================
+   FOOTER — Mobile
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .footer-new {
+    padding: 60px 20px;
+    padding-bottom: 100px; /* Account for bottom dock */
+  }
+
+  .footer-new__top {
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 40px;
+    padding-bottom: 40px;
+  }
+
+  .footer-new__brand {
+    justify-content: center;
+  }
+
+  .footer-new__links {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .footer-new__links a {
+    font-size: 12px;
+  }
+
+  .footer-new__bottom {
+    font-size: 12px;
+  }
+}
+
+/* ============================================================
+   PICKER MODAL — Mobile Fullscreen
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .picker {
+    display: flex !important;
+    align-items: flex-end;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.4));
+  }
+
+  .picker__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .picker__panel {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 24px 24px 0 0;
+    animation: panelSlideUp 0.5s var(--ease) both;
+  }
+
+  @keyframes panelSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .picker__head {
+    padding: 20px 20px 0;
+  }
+
+  .picker__head h2 {
+    font-size: 24px;
+  }
+
+  .picker__head p {
+    font-size: 14px;
+  }
+
+  .picker__search {
+    margin: 16px 20px;
+  }
+
+  .picker__search input {
+    font-size: 16px; /* Prevents zoom */
+  }
+
+  .picker__filters {
+    padding: 0 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .picker__grid {
+    padding: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .place-card {
+    aspect-ratio: 3 / 4;
+  }
+}
+
+/* ============================================================
+   3D SCENE — Mobile HUD
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .scene__hud {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .scene__top {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(13, 17, 26, 0.5);
+    backdrop-filter: blur(20px);
+    border-radius: 12px;
+  }
+
+  .scene__place {
+    text-align: center;
+  }
+
+  .scene__placeName {
+    font-size: 16px;
+  }
+
+  .scene__placeMeta {
+    font-size: 10px;
+  }
+
+  .scene__bottom {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(13, 17, 26, 0.5);
+    backdrop-filter: blur(20px);
+    border-radius: 12px;
+  }
+
+  .scene__people {
+    text-align: center;
+  }
+
+  .people-counter {
+    font-size: 14px;
+  }
+
+  .scene__actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .hud-btn {
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+
+  .hud-btn span {
+    display: none;
+  }
+
+  .hud-btn--icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .scene__chat {
+    max-height: 200px;
+  }
+
+  .chat-messages {
+    max-height: 120px;
+  }
+
+  .chat-form {
+    gap: 8px;
+  }
+
+  .chat-form input {
+    font-size: 14px;
+  }
+
+  .scene__compass {
+    width: 50px;
+    height: 50px;
+    top: 80px;
+    right: 12px;
+  }
+
+  .scene__side {
+    right: 12px;
+    top: 140px;
+  }
+}
+
+/* ============================================================
+   ONBOARDING MODAL — Mobile
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .onboard {
+    display: flex !important;
+    align-items: flex-end;
+  }
+
+  .onboard__card {
+    width: 100%;
+    border-radius: 24px 24px 0 0;
+    padding: 32px 20px;
+    animation: onboardSlideUp 0.5s var(--ease) both;
+  }
+
+  @keyframes onboardSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .onboard__card h2 {
+    font-size: 24px;
+  }
+
+  .onboard__card p {
+    font-size: 14px;
+  }
+
+  .onboard__avatars {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .onboard__input {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+
+  .onboard__card button {
+    width: 100%;
+  }
+}
+
+/* ============================================================
+   WAITLIST MODAL — Mobile
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .waitlist {
+    display: flex !important;
+    align-items: flex-end;
+  }
+
+  .waitlist__overlay {
+    position: absolute;
+    inset: 0;
+  }
+
+  .waitlist__card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    border-radius: 24px 24px 0 0;
+    padding: 32px 20px;
+    animation: waitlistSlideUp 0.5s var(--ease) both;
+  }
+
+  @keyframes waitlistSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .waitlist__card h2 {
+    font-size: 24px;
+    padding-right: 40px;
+  }
+
+  .waitlist__card form {
+    gap: 12px;
+  }
+
+  .waitlist__card input,
+  .waitlist__card select {
+    font-size: 16px;
+  }
+
+  .waitlist__card button {
+    width: 100%;
+  }
+
+  .icon-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+  }
+}
+
+/* ============================================================
+   SAFE AREA INSETS — Notch Support
+   ============================================================ */
+
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .nav-dock {
+    left: max(50%, env(safe-area-inset-left));
+    right: max(50%, env(safe-area-inset-right));
+    bottom: max(20px, calc(20px + env(safe-area-inset-bottom)));
+  }
+
+  .picker__panel,
+  .onboard__card,
+  .waitlist__card {
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+}
+
+/* ============================================================
+   TOUCH INTERACTIONS
+   ============================================================ */
+
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover states on touch devices */
+  .btn-hero:hover,
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .experience-card:hover,
+  .feature-item:hover,
+  .pricing-card:hover,
+  .nav-dock__link:hover {
+    transform: none;
+  }
+
+  /* Add active states instead */
+  .btn-hero:active,
+  .btn-primary:active,
+  .btn-secondary:active {
+    transform: scale(0.98);
+  }
+
+  .experience-card:active,
+  .feature-item:active,
+  .pricing-card:active {
+    background: rgba(26, 31, 46, 0.8);
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ============================================================
+   LANDSCAPE MODE — Mobile
+   ============================================================ */
+
+@media (max-height: 600px) and (orientation: landscape) {
+  .hero-immersive {
+    min-height: auto;
+    padding: 20px;
+  }
+
+  .hero-immersive__visual {
+    min-height: 300px;
+  }
+
+  .nav-dock {
+    bottom: 10px;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+
+  .footer-new {
+    padding: 40px 20px 80px;
+  }
+}
+
+/* ============================================================
+   SMALL PHONES — Extra Small Devices
+   ============================================================ */
+
+@media (max-width: 375px) {
+  .hero-immersive__title {
+    font-size: clamp(24px, 8vw, 32px);
+  }
+
+  .hero-immersive__description {
+    font-size: 14px;
+  }
+
+  .experience-section__header h2,
+  .places-showcase__header h2,
+  .features-section h2,
+  .pricing-section h2,
+  .cta-section__content h2 {
+    font-size: 24px;
+  }
+
+  .experience-grid,
+  .features-grid,
+  .pricing-grid {
+    gap: 16px;
+  }
+
+  .experience-card,
+  .feature-item,
+  .pricing-card {
+    padding: 16px;
+  }
+
+  .btn-hero,
+  .btn-large {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+}

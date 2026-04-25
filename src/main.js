@@ -1,10 +1,15 @@
 import { ZeropointScene } from './scene/scene.js';
 import { ZeroRoom } from './net/room.js';
 import { PLACES, PLACE_TAGS, getPlace } from './data/places.js';
+import { initMobileOptimizations, enableMobileScrollOptimization } from './mobile.js';
 
 /* =========================================================
    Zeropoint main controller
    ========================================================= */
+
+// Initialize mobile optimizations
+initMobileOptimizations();
+enableMobileScrollOptimization();
 
 const AVATAR_COLORS = [
   '#7ce7ff', '#b794ff', '#ffd27c', '#ff9b7c',
