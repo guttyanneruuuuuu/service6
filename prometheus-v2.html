@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UCS Prometheus V2 — Advanced 3D Model Viewer</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#00000a; overflow:hidden; font-family:'Share Tech Mono', monospace; }
+canvas { position:absolute; top:0; left:0; }
+
+/* ── HUD ── */
+.hud { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+
+#title-panel {
+  position:absolute; top:20px; right:20px; text-align:right;
+  border-right:2px solid rgba(68,170,255,.4);
+  padding-right:14px;
+}
+#title-class { font-size:9px; letter-spacing:4px; color:rgba(68,170,255,.5); text-transform:uppercase; }
+#title-name  { font-family:'Orbitron',sans-serif; font-size:26px; font-weight:900;
+               color:#44aaff; text-shadow:0 0 20px #44aaff88, 0 0 40px #44aaff44;
+               line-height:1.1; margin:4px 0; }
+#title-sub   { font-size:8px; letter-spacing:3px; color:rgba(68,170,255,.4); }
+
+#info-panel {
+  position:absolute; top:20px; left:20px;
+  border-left:2px solid rgba(68,170,255,.3);
+  padding-left:14px;
+}
+.info-line { font-size:10px; color:rgba(68,170,255,.6); letter-spacing:1px; line-height:2.4; }
+.key { color:rgba(68,170,255,.9); }
+
+#stats-panel {
+  position:absolute; bottom:70px; left:20px;
+  font-size:9px; color:rgba(68,170,255,.4);
+  letter-spacing:2px; line-height:2.2;
+}
+
+/* corner decoration */
+.corner { position:absolute; width:24px; height:24px; }
+.corner::before, .corner::after { content:''; position:absolute; background:rgba(68,170,255,.5); }
+.corner::before { width:100%; height:2px; top:0; left:0; }
+.corner::after  { width:2px; height:100%; top:0; left:0; }
+#c-tl { top:12px; left:12px; }
+#c-tr { top:12px; right:12px; transform:scaleX(-1); }
+#c-bl { bottom:12px; left:12px; transform:scaleY(-1); }
+#c-br { bottom:12px; right:12px; transform:scale(-1); }
+
+/* scan line effect */
+#scanline {
+  position:absolute; inset:0;
+  background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.04) 2px, rgba(0,0,0,.04) 4px);
+  pointer-events:none;
+}
+
+/* ── TOOLBAR ── */
+#toolbar {
+  position:absolute; bottom:18px; left:50%; transform:translateX(-50%);
+  display:flex; gap:6px; pointer-events:all;
+  background:rgba(0,8,22,.85);
+  border:1px solid rgba(68,170,255,.2);
+  padding:8px 12px;
+  backdrop-filter:blur(8px);
+}
+
+.btn {
+  background:transparent; color:rgba(68,170,255,.75);
+  border:1px solid rgba(68,170,255,.25);
+  padding:6px 12px;
+  font-family:'Share Tech Mono',monospace; font-size:10px;
+  letter-spacing:1.5px; text-transform:uppercase;
+  cursor:pointer; transition:all .2s;
+  white-space:nowrap;
+}
+.btn:hover {
+  color:#88ccff; border-color:rgba(68,170,255,.8);
+  background:rgba(68,170,255,.1);
+  box-shadow:0 0 12px rgba(68,170,255,.25);
+}
+.btn.on {
+  color:#aaddff; border-color:#44aaff;
+  background:rgba(68,170,255,.18);
+  box-shadow:0 0 8px rgba(68,170,255,.3) inset;
+}
+
+/* ── TOAST ── */
+#toast {
+  position:absolute; bottom:70px; left:50%; transform:translateX(-50%);
+  white-space:nowrap;
+  background:rgba(0,30,12,.92); color:#44ff88;
+  border:1px solid #44ff8866; padding:7px 20px;
+  font-size:10px; letter-spacing:2px;
+  opacity:0; transition:opacity .4s;
+  pointer-events:none;
+}
+
+/* ── LOADER ── */
+#loader {
+  position:absolute; inset:0; background:#00000f; z-index:100;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+  transition:opacity 1.2s;
+}
+#loader-title {
+  font-family:'Orbitron',sans-serif; font-size:13px; font-weight:700;
+  color:#44aaff; letter-spacing:6px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+#loader-bar { width:240px; height:1px; background:rgba(68,170,255,.15); }
+#loader-fill { width:0; height:100%; background:#44aaff; box-shadow:0 0 10px #44aaff; transition:width .25s ease; }
+#loader-sub { font-size:9px; color:rgba(68,170,255,.5); letter-spacing:3px; }
+
+@keyframes pulse { 0%,100% { opacity:.7 } 50% { opacity:1 } }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div id="loader-title">CONSTRUCTING 3D MODEL</div>
+  <div id="loader-bar"><div id="loader-fill"></div></div>
+  <div id="loader-sub" id="lsub">INITIALIZING ENGINE...</div>
+</div>
+
+<div class="hud">
+  <div id="title-panel">
+    <div id="title-class">Corvette-Class Warship · Hull #CV-007</div>
+    <div id="title-name">UCS PROMETHEUS</div>
+    <div id="title-sub">UNIFIED COLONIAL STARSHIPS · DRIVE YARD SIGMA</div>
+  </div>
+  <div id="info-panel">
+    <div class="info-line"><span class="key">L-DRAG</span>  Rotate</div>
+    <div class="info-line"><span class="key">R-DRAG</span>  Pan</div>
+    <div class="info-line"><span class="key">SCROLL</span>  Zoom</div>
+    <div class="info-line"><span class="key">DBL-CLK</span> Reset View</div>
+  </div>
+  <div id="stats-panel">
+    <div id="s-poly">POLYGONS:  —</div>
+    <div id="s-mesh">MESHES:    —</div>
+    <div id="s-mat">MATERIALS: —</div>
+  </div>
+  <div id="scanline"></div>
+  <div class="corner" id="c-tl"></div>
+  <div class="corner" id="c-tr"></div>
+  <div class="corner" id="c-bl"></div>
+  <div class="corner" id="c-br"></div>
+</div>
+
+<div id="toolbar">
+  <button class="btn" id="b-wire"  onclick="toggleWire()">⬡ WIRE</button>
+  <button class="btn on" id="b-rot"   onclick="toggleRot()">↻ ROTATE</button>
+  <button class="btn" id="b-light" onclick="cycleLight()">☀ LIGHT</button>
+  <button class="btn"              onclick="resetCam()">⌖ RESET</button>
+  <button class="btn"              onclick="exportGLB()">↓ GLB</button>
+  <button class="btn"              onclick="exportOBJ()">↓ OBJ</button>
+</div>
+
+<div id="toast">✓ EXPORT COMPLETE — FILE SAVED</div>
+
+<script type="module">
+import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
+import { OrbitControls }  from 'https://unpkg.com/three@0.152.2/examples/jsm/controls/OrbitControls.js';
+import { GLTFExporter }   from 'https://unpkg.com/three@0.152.2/examples/jsm/exporters/GLTFExporter.js';
+import { OBJExporter }    from 'https://unpkg.com/three@0.152.2/examples/jsm/exporters/OBJExporter.js';
+import { EffectComposer } from 'https://unpkg.com/three@0.152.2/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass }     from 'https://unpkg.com/three@0.152.2/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'https://unpkg.com/three@0.152.2/examples/jsm/postprocessing/UnrealBloomPass.js';
+
+// ═══════════════════════════════════════════════════════════════
+// RENDERER & POST-PROCESSING
+// ═══════════════════════════════════════════════════════════════
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.35;
+renderer.outputEncoding = THREE.sRGBEncoding;
+document.body.appendChild(renderer.domElement);
+
+// Post-processing
+const composer = new EffectComposer(renderer);
+const renderPass = new RenderPass(new THREE.Scene(), new THREE.Camera());
+composer.addPass(renderPass);
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 1.2, 0.4, 0.85);
+composer.addPass(bloomPass);
+
+// ═══════════════════════════════════════════════════════════════
+// SCENE / CAMERA / CONTROLS
+// ═══════════════════════════════════════════════════════════════
+const scene  = new THREE.Scene();
+scene.background = new THREE.Color(0x00000a);
+scene.fog = new THREE.Fog(0x00000a, 80, 200);
+
+const camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 0.1, 600);
+camera.position.set(22, 12, 28);
+const CAM_HOME = camera.position.clone();
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping    = true;
+controls.dampingFactor    = 0.055;
+controls.autoRotate       = true;
+controls.autoRotateSpeed  = 0.35;
+controls.minDistance      = 5;
+controls.maxDistance      = 120;
+
+renderer.domElement.addEventListener('dblclick', () => {
+  camera.position.copy(CAM_HOME);
+  controls.target.set(0, 0, 0);
+  controls.update();
+});
+
+// ═══════════════════════════════════════════════════════════════
+// ADVANCED LIGHTING SYSTEM
+// ═══════════════════════════════════════════════════════════════
+const ambient = new THREE.AmbientLight(0x0a1428, 0.85);
+scene.add(ambient);
+
+const sun = new THREE.DirectionalLight(0xfff0e8, 3.2);
+sun.position.set(16, 24, 12);
+sun.castShadow = true;
+Object.assign(sun.shadow.camera, { near:1, far:100, left:-30, right:30, top:30, bottom:-30 });
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.bias = -0.0005;
+scene.add(sun);
+
+const fill = new THREE.DirectionalLight(0x1a3a5c, 1.3);
+fill.position.set(-18, -8, -18);
+scene.add(fill);
+
+const rim = new THREE.DirectionalLight(0x88ccff, 0.9);
+rim.position.set(0, 12, -26);
+scene.add(rim);
+
+const topLight = new THREE.DirectionalLight(0xaabbdd, 0.6);
+topLight.position.set(8, 28, 6);
+scene.add(topLight);
+
+// Engine glow point-lights (updated each frame)
+const eLights = [
+  new THREE.PointLight(0xff7722, 6.5, 15),
+  new THREE.PointLight(0xff7722, 6.5, 15),
+  new THREE.PointLight(0xff9944, 7.5, 18),
+];
+eLights[0].position.set(-4.2, -0.4, 13.5);
+eLights[1].position.set( 4.2, -0.4, 13.5);
+eLights[2].position.set(  0,   0.2, 14.0);
+eLights.forEach(l => scene.add(l));
+
+// Bridge window light
+const bridgeLight = new THREE.PointLight(0x5599ff, 2.5, 6);
+bridgeLight.position.set(0, 3.8, -6.5);
+scene.add(bridgeLight);
+
+// Accent lights on turrets
+for (let i = 0; i < 4; i++) {
+  const tl = new THREE.PointLight(0x44ff88, 1.5, 4);
+  tl.position.set(Math.random() * 6 - 3, 2, Math.random() * 12 - 6);
+  scene.add(tl);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ENHANCED STARFIELD
+// ═══════════════════════════════════════════════════════════════
+{
+  const N = 6000, pos = new Float32Array(N*3), col = new Float32Array(N*3);
+  for (let i = 0; i < N; i++) {
+    const r = 180 + Math.random() * 80;
+    const t = Math.random() * Math.PI * 2, p = Math.acos(2*Math.random()-1);
+    pos[i*3]   = r * Math.sin(p) * Math.cos(t);
+    pos[i*3+1] = r * Math.sin(p) * Math.sin(t);
+    pos[i*3+2] = r * Math.cos(p);
+    const hue = Math.random();
+    if      (hue < 0.25) { col[i*3]=0.80; col[i*3+1]=0.90; col[i*3+2]=1.00; }
+    else if (hue < 0.45) { col[i*3]=1.00; col[i*3+1]=0.95; col[i*3+2]=0.70; }
+    else if (hue < 0.60) { col[i*3]=0.88; col[i*3+1]=0.75; col[i*3+2]=1.00; }
+    else                 { const b=0.35+Math.random()*0.65; col[i*3]=col[i*3+1]=col[i*3+2]=b; }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+  scene.add(new THREE.Points(g, new THREE.PointsMaterial({ size:0.3, vertexColors:true, sizeAttenuation:true })));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADVANCED MATERIALS SYSTEM
+// ═══════════════════════════════════════════════════════════════
+const M = {
+  hull:     new THREE.MeshStandardMaterial({ color:0x1c2030, metalness:0.78, roughness:0.28, envMapIntensity:1.2 }),
+  hullB:    new THREE.MeshStandardMaterial({ color:0x242840, metalness:0.72, roughness:0.35, envMapIntensity:1.1 }),
+  hullDk:   new THREE.MeshStandardMaterial({ color:0x0d1018, metalness:0.62, roughness:0.52, envMapIntensity:0.9 }),
+  panelDk:  new THREE.MeshStandardMaterial({ color:0x080c14, metalness:0.55, roughness:0.65 }),
+  panelAcc: new THREE.MeshStandardMaterial({ color:0x1a2838, metalness:0.68, roughness:0.40 }),
+  thr:      new THREE.MeshStandardMaterial({ color:0x1a2a3a, metalness:0.65, roughness:0.45 }),
+  engRing:  new THREE.MeshStandardMaterial({ color:0x0f1820, metalness:0.75, roughness:0.30 }),
+  eng:      new THREE.MeshStandardMaterial({ color:0xff6600, metalness:0.3, roughness:0.4, emissive:0xff6600, emissiveIntensity:0.8 }),
+  engIn:    new THREE.MeshStandardMaterial({ color:0xffaa44, metalness:0.2, roughness:0.5, emissive:0xffaa44, emissiveIntensity:1.0 }),
+  wpn:      new THREE.MeshStandardMaterial({ color:0x0a0f18, metalness:0.80, roughness:0.25 }),
+  chrome:   new THREE.MeshStandardMaterial({ color:0x888888, metalness:0.95, roughness:0.08 }),
+  sensB:    new THREE.MeshStandardMaterial({ color:0x1a3a5a, metalness:0.4, roughness:0.6, emissive:0x4488ff, emissiveIntensity:0.6 }),
+  acc:      new THREE.MeshStandardMaterial({ color:0x2a4a6a, metalness:0.70, roughness:0.35 }),
+  accGlow:  new THREE.MeshStandardMaterial({ color:0x44aaff, metalness:0.6, roughness:0.4, emissive:0x44aaff, emissiveIntensity:0.7 }),
+  rad:      new THREE.MeshStandardMaterial({ color:0x1a2a3a, metalness:0.50, roughness:0.50 }),
+  grill:    new THREE.MeshStandardMaterial({ color:0x050810, metalness:0.45, roughness:0.70 }),
+  detail:   new THREE.MeshStandardMaterial({ color:0x3a4a5a, metalness:0.65, roughness:0.45 }),
+};
+
+// ═══════════════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
+const mk = (g, m) => new THREE.Mesh(g, m);
+let polyCount = 0, meshCount = 0;
+const addMesh = (mesh) => {
+  meshCount++;
+  if (mesh.geometry) polyCount += mesh.geometry.attributes.position.count / 3;
+  return mesh;
+};
+
+// ═══════════════════════════════════════════════════════════════
+// BUILD SHIP
+// ═══════════════════════════════════════════════════════════════
+const ship = new THREE.Group();
+scene.add(ship);
+
+// ─── 1. MAIN HULL BODY ───────────────────────────────────────────
+{
+  // Primary hull capsule
+  const hull = addMesh(mk(new THREE.CapsuleGeometry(2.0, 18, 16, 32), M.hull));
+  hull.rotation.x = Math.PI / 2;
+  hull.position.z = -2;
+  ship.add(hull);
+
+  // Secondary hull bulge
+  const bulge = addMesh(mk(new THREE.SphereGeometry(2.2, 20, 16), M.hullB));
+  bulge.scale.set(1, 0.85, 0.95);
+  bulge.position.set(0, 0, 2);
+  ship.add(bulge);
+
+  // Ventral hull plate
+  const ventral = addMesh(mk(new THREE.BoxGeometry(4.2, 0.4, 16), M.hullDk));
+  ventral.position.set(0, -1.5, -2);
+  ship.add(ventral);
+
+  // Dorsal ridge
+  const ridge = addMesh(mk(new THREE.BoxGeometry(0.35, 0.6, 15), M.panelAcc));
+  ridge.position.set(0, 1.52, -1);
+  ship.add(ridge);
+
+  // Hull structural ribs (high density)
+  for (let z = -10; z <= 10; z += 2.2) {
+    const rib = addMesh(mk(new THREE.TorusGeometry(2.3, 0.048, 8, 32, Math.PI * 1.8), M.hullDk));
+    rib.rotation.x = Math.PI / 2;
+    rib.position.set(0, -0.15, z);
+    ship.add(rib);
+  }
+}
+
+// ─── 2. BRIDGE SUPERSTRUCTURE ────────────────────────────────────
+{
+  // Bridge tower main body
+  const tower = addMesh(mk(new THREE.BoxGeometry(1.2, 1.8, 1.4), M.hull));
+  tower.position.set(0, 2.2, -5.5);
+  ship.add(tower);
+
+  // Bridge viewport array (6 windows)
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2;
+    const wx = Math.cos(angle) * 0.55;
+    const wz = Math.sin(angle) * 0.45;
+    const window = addMesh(mk(new THREE.CircleGeometry(0.12, 8), M.sensB));
+    window.rotation.y = angle;
+    window.position.set(wx, 2.5, -5.5 + wz);
+    ship.add(window);
+  }
+
+  // Bridge antenna mast
+  const mast = addMesh(mk(new THREE.CylinderGeometry(0.08, 0.08, 2.2, 8), M.chrome));
+  mast.position.set(0, 3.8, -5.5);
+  ship.add(mast);
+
+  // Antenna dish
+  const dish = addMesh(mk(new THREE.ConeGeometry(0.35, 0.15, 16), M.acc));
+  dish.rotation.x = Math.PI / 2;
+  dish.position.set(0, 4.2, -5.5);
+  ship.add(dish);
+
+  // Sensor arrays on tower sides
+  for (const s of [-1, 1]) {
+    const sensor = addMesh(mk(new THREE.BoxGeometry(0.25, 0.35, 0.25), M.accGlow));
+    sensor.position.set(s * 0.7, 2.8, -5.5);
+    ship.add(sensor);
+  }
+}
+
+// ─── 3. COMMAND DECK SECTION ─────────────────────────────────────
+{
+  // Upper command module
+  const cmd = addMesh(mk(new THREE.BoxGeometry(1.8, 0.9, 1.2), M.panelAcc));
+  cmd.position.set(0, 1.2, -6.5);
+  ship.add(cmd);
+
+  // Command deck viewport
+  const viewport = addMesh(mk(new THREE.PlaneGeometry(1.4, 0.6, 4, 2), M.sensB));
+  viewport.position.set(0, 1.2, -7.1);
+  ship.add(viewport);
+
+  // Tactical display panels (port & starboard)
+  for (const s of [-1, 1]) {
+    const panel = addMesh(mk(new THREE.BoxGeometry(0.4, 0.7, 0.3), M.panelDk));
+    panel.position.set(s * 1.0, 1.2, -6.2);
+    ship.add(panel);
+  }
+}
+
+// ─── 4. DETAILED HULL GREEBLIES ──────────────────────────────────
+// Hundreds of small details for visual complexity
+const greebleConfigs = [
+  // Dorsal details
+  { pos: [0, 1.5, -8], size: [0.3, 0.15, 0.2], mat: M.panelDk },
+  { pos: [-0.8, 1.4, -6], size: [0.25, 0.12, 0.18], mat: M.detail },
+  { pos: [0.8, 1.4, -6], size: [0.25, 0.12, 0.18], mat: M.detail },
+  { pos: [-1.2, 1.3, -2], size: [0.2, 0.1, 0.25], mat: M.panelDk },
+  { pos: [1.2, 1.3, -2], size: [0.2, 0.1, 0.25], mat: M.panelDk },
+  { pos: [0, 1.5, 2], size: [0.35, 0.12, 0.3], mat: M.detail },
+  { pos: [-0.9, 1.4, 4], size: [0.22, 0.1, 0.2], mat: M.panelDk },
+  { pos: [0.9, 1.4, 4], size: [0.22, 0.1, 0.2], mat: M.panelDk },
+  { pos: [0, 1.5, 7], size: [0.3, 0.15, 0.25], mat: M.detail },
+  
+  // Ventral details
+  { pos: [-1.0, -1.5, -5], size: [0.28, 0.12, 0.22], mat: M.panelDk },
+  { pos: [1.0, -1.5, -5], size: [0.28, 0.12, 0.22], mat: M.panelDk },
+  { pos: [0, -1.5, -1], size: [0.4, 0.1, 0.3], mat: M.detail },
+  { pos: [-1.3, -1.4, 2], size: [0.2, 0.08, 0.22], mat: M.panelDk },
+  { pos: [1.3, -1.4, 2], size: [0.2, 0.08, 0.22], mat: M.panelDk },
+  { pos: [0, -1.5, 5], size: [0.35, 0.1, 0.28], mat: M.detail },
+  
+  // Port side details
+  { pos: [-2.5, 0.5, -7], size: [0.2, 0.3, 0.25], mat: M.panelAcc },
+  { pos: [-2.5, -0.2, -3], size: [0.18, 0.25, 0.2], mat: M.detail },
+  { pos: [-2.5, 0.8, 1], size: [0.22, 0.28, 0.22], mat: M.panelAcc },
+  { pos: [-2.5, -0.5, 5], size: [0.2, 0.22, 0.2], mat: M.detail },
+  
+  // Starboard side details
+  { pos: [2.5, 0.5, -7], size: [0.2, 0.3, 0.25], mat: M.panelAcc },
+  { pos: [2.5, -0.2, -3], size: [0.18, 0.25, 0.2], mat: M.detail },
+  { pos: [2.5, 0.8, 1], size: [0.22, 0.28, 0.22], mat: M.panelAcc },
+  { pos: [2.5, -0.5, 5], size: [0.2, 0.22, 0.2], mat: M.detail },
+];
+
+for (const cfg of greebleConfigs) {
+  const detail = addMesh(mk(new THREE.BoxGeometry(...cfg.size), cfg.mat));
+  detail.position.set(...cfg.pos);
+  ship.add(detail);
+}
+
+// Additional cylindrical greeblies
+for (let i = 0; i < 16; i++) {
+  const x = (Math.random() - 0.5) * 4.5;
+  const y = (Math.random() - 0.5) * 2.5 + 0.3;
+  const z = (Math.random() - 0.5) * 16;
+  const cyl = addMesh(mk(new THREE.CylinderGeometry(0.08, 0.08, 0.4, 6), M.panelDk));
+  cyl.position.set(x, y, z);
+  cyl.rotation.x = Math.random() * Math.PI;
+  ship.add(cyl);
+}
+
+// ─── 5. INTAKE & COOLING SYSTEM ──────────────────────────────────
+{
+  // Main intake manifold
+  const intake = addMesh(mk(new THREE.CylinderGeometry(1.2, 1.0, 2.5, 16), M.grill));
+  intake.rotation.x = Math.PI / 2;
+  intake.position.set(0, 0.2, -10);
+  ship.add(intake);
+
+  // Intake grilles (multiple layers)
+  for (let layer = 0; layer < 5; layer++) {
+    const grille = addMesh(mk(new THREE.TorusGeometry(1.1, 0.055, 8, 28), M.thr));
+    grille.rotation.y = Math.PI / 2;
+    grille.position.set(0, 0.2, -9.5 + layer * 0.45);
+    ship.add(grille);
+  }
+
+  // Intake vanes
+  for (let v = 0; v < 8; v++) {
+    const angle = (v / 8) * Math.PI * 2;
+    const vane = addMesh(mk(new THREE.BoxGeometry(0.08, 1.1, 0.3), M.panelDk));
+    vane.position.set(Math.cos(angle) * 0.9, 0.2, -9.5);
+    vane.rotation.z = angle;
+    ship.add(vane);
+  }
+}
+
+// ─── 6. ENGINE NACELLES (port & starboard) ───────────────────────
+for (const s of [-1, 1]) {
+  const ex = s * 4.5;
+
+  // Pod main body (high-poly cylinder)
+  const body = addMesh(mk(new THREE.CylinderGeometry(0.95, 0.95, 10.2, 18), M.hullB));
+  body.rotation.x = Math.PI / 2;
+  body.position.set(ex, -0.35, 4.5);
+  ship.add(body);
+
+  // Pod nose fairing (high-detail cone)
+  const nose = addMesh(mk(new THREE.ConeGeometry(0.95, 2.8, 18), M.hull));
+  nose.rotation.x = Math.PI / 2;
+  nose.position.set(ex, -0.35, -1.0);
+  ship.add(nose);
+
+  // Pod tail taper
+  const tail = addMesh(mk(new THREE.ConeGeometry(0.95, 1.3, 18), M.hullDk));
+  tail.rotation.x = -Math.PI / 2;
+  tail.position.set(ex, -0.35, 10.0);
+  ship.add(tail);
+
+  // Intake grill rings (high density)
+  for (let ri = 0; ri < 6; ri++) {
+    const ring = addMesh(mk(new THREE.TorusGeometry(0.95, 0.052, 8, 28), M.thr));
+    ring.rotation.y = Math.PI / 2;
+    ring.position.set(ex, -0.35, 1.2 + ri * 1.6);
+    ship.add(ring);
+  }
+
+  // Engine bell housing
+  const bellHousing = addMesh(mk(new THREE.CylinderGeometry(0.55, 0.85, 0.9, 16), M.engRing));
+  bellHousing.rotation.x = Math.PI / 2;
+  bellHousing.position.set(ex, -0.35, 10.3);
+  ship.add(bellHousing);
+
+  // Inner nozzle ring
+  const nozzleInner = addMesh(mk(new THREE.TorusGeometry(0.57, 0.068, 8, 24), M.engRing));
+  nozzleInner.rotation.y = Math.PI / 2;
+  nozzleInner.position.set(ex, -0.35, 10.7);
+  ship.add(nozzleInner);
+
+  // Engine exhaust glow disc
+  const glow = addMesh(mk(new THREE.CircleGeometry(0.7, 20), M.eng));
+  glow.rotation.x = Math.PI / 2;
+  glow.position.set(ex, -0.35, 10.75);
+  ship.add(glow);
+
+  const inner = addMesh(mk(new THREE.CircleGeometry(0.35, 16), M.engIn));
+  inner.rotation.x = Math.PI / 2;
+  inner.position.set(ex, -0.35, 10.77);
+  ship.add(inner);
+
+  // Pylon structure
+  const pylon = addMesh(mk(new THREE.BoxGeometry(2.1, 0.3, 6.8), M.hullDk));
+  pylon.position.set(s * 3.3, -0.2, 4.5);
+  ship.add(pylon);
+
+  // Pylon ribs (reinforcement)
+  for (let r = 0; r < 3; r++) {
+    const pylRib = addMesh(mk(new THREE.BoxGeometry(2.1, 0.12, 0.08), M.panelDk));
+    pylRib.position.set(s * 3.3, -0.2, 1.5 + r * 2.8);
+    ship.add(pylRib);
+  }
+
+  // Pod surface details
+  for (let d = 0; d < 4; d++) {
+    const panelBox = addMesh(mk(new THREE.BoxGeometry(0.06, 0.65, 2.2), M.panelDk));
+    panelBox.position.set(ex + s * 0.96, -0.35, 2.5 + d * 2.0);
+    ship.add(panelBox);
+  }
+
+  // Update point light
+  eLights[s > 0 ? 1 : 0].position.set(ex, -0.35, 11.5);
+}
+
+// ─── 7. MAIN CENTER ENGINE CLUSTER ───────────────────────────────
+{
+  // Housing (high-poly)
+  const housing = addMesh(mk(new THREE.CylinderGeometry(1.9, 1.6, 2.8, 18), M.hullB));
+  housing.rotation.x = Math.PI / 2;
+  housing.position.set(0, 0.1, 12.0);
+  ship.add(housing);
+
+  // Detail ribs on housing
+  for (let r = 0; r < 4; r++) {
+    const rib = addMesh(mk(new THREE.TorusGeometry(1.78, 0.052, 8, 28), M.thr));
+    rib.rotation.y = Math.PI / 2;
+    rib.position.set(0, 0.1, 10.6 + r * 0.7);
+    ship.add(rib);
+  }
+
+  // 3 main nozzles in triangle formation
+  const nozPos = [[-1.0, 0.6], [1.0, 0.6], [0, -0.7]];
+  for (const [ox, oy] of nozPos) {
+    const bell = addMesh(mk(new THREE.CylinderGeometry(0.5, 0.75, 0.85, 16), M.engRing));
+    bell.rotation.x = Math.PI / 2;
+    bell.position.set(ox, oy, 13.3);
+    ship.add(bell);
+
+    const inner2 = addMesh(mk(new THREE.TorusGeometry(0.52, 0.056, 8, 20), M.engRing));
+    inner2.rotation.y = Math.PI / 2;
+    inner2.position.set(ox, oy, 13.75);
+    ship.add(inner2);
+
+    const gw = addMesh(mk(new THREE.CircleGeometry(0.68, 18), M.eng));
+    gw.rotation.x = Math.PI / 2;
+    gw.position.set(ox, oy, 13.82);
+    ship.add(gw);
+
+    const gc = addMesh(mk(new THREE.CircleGeometry(0.32, 14), M.engIn));
+    gc.rotation.x = Math.PI / 2;
+    gc.position.set(ox, oy, 13.84);
+    ship.add(gc);
+  }
+  eLights[2].position.set(0, 0.1, 14.5);
+}
+
+// ─── 8. POINT-DEFENSE TURRETS ×4 ──────────────────────────────────
+const turretPts = [
+  [-2.1, 2.15, -6.8],
+  [ 2.1, 2.15, -6.8],
+  [-3.2, 1.95,  3.8],
+  [ 3.2, 1.95,  3.8],
+];
+for (const [tx, ty, tz] of turretPts) {
+  // Ring base
+  const ring = addMesh(mk(new THREE.TorusGeometry(0.45, 0.068, 8, 20), M.hull));
+  ring.rotation.x = Math.PI / 2;
+  ring.position.set(tx, ty - 0.07, tz);
+  ship.add(ring);
+
+  // Base cylinder
+  const base = addMesh(mk(new THREE.CylinderGeometry(0.4, 0.48, 0.3, 14), M.hull));
+  base.position.set(tx, ty + 0.1, tz);
+  ship.add(base);
+
+  // Turret body
+  const body = addMesh(mk(new THREE.CylinderGeometry(0.32, 0.4, 0.45, 14), M.wpn));
+  body.position.set(tx, ty + 0.4, tz);
+  ship.add(body);
+
+  // Barrel housing
+  const mount = addMesh(mk(new THREE.BoxGeometry(0.62, 0.3, 0.35), M.wpn));
+  mount.position.set(tx, ty + 0.72, tz);
+  ship.add(mount);
+
+  // Twin barrels with high detail
+  for (const bx of [-0.16, 0.16]) {
+    const barrel = addMesh(mk(new THREE.CylinderGeometry(0.062, 0.062, 1.4, 12), M.wpn));
+    barrel.rotation.x = Math.PI / 2;
+    barrel.position.set(tx + bx, ty + 0.72, tz - 0.85);
+    ship.add(barrel);
+
+    // Muzzle ring
+    const muzzle = addMesh(mk(new THREE.TorusGeometry(0.078, 0.022, 6, 12), M.chrome));
+    muzzle.rotation.x = Math.PI / 2;
+    muzzle.position.set(tx + bx, ty + 0.72, tz - 1.55);
+    ship.add(muzzle);
+
+    // Barrel cooling fins
+    for (let f = 0; f < 3; f++) {
+      const fin = addMesh(mk(new THREE.BoxGeometry(0.15, 0.08, 0.04), M.panelDk));
+      fin.position.set(tx + bx, ty + 0.72, tz - 0.5 - f * 0.25);
+      ship.add(fin);
+    }
+  }
+
+  // Sensor eye on turret
+  const eye = addMesh(mk(new THREE.SphereGeometry(0.09, 10, 6), M.sensB));
+  eye.position.set(tx, ty + 0.85, tz - 0.3);
+  ship.add(eye);
+
+  // Turret tracking system
+  const tracker = addMesh(mk(new THREE.TorusGeometry(0.35, 0.04, 6, 16), M.accGlow));
+  tracker.rotation.z = Math.PI / 2;
+  tracker.position.set(tx, ty + 0.5, tz);
+  ship.add(tracker);
+}
+
+// ─── 9. HEAVY RAIL CANNON (ventral fore) ───────────────────────────
+{
+  const frame = addMesh(mk(new THREE.BoxGeometry(0.6, 0.35, 7.0), M.wpn));
+  frame.position.set(0, -1.65, -8.0);
+  ship.add(frame);
+
+  for (const bx of [-0.2, 0.2]) {
+    const barrel = addMesh(mk(new THREE.CylinderGeometry(0.095, 0.095, 8.0, 12), M.wpn));
+    barrel.rotation.x = Math.PI / 2;
+    barrel.position.set(bx, -1.66, -8.0);
+    ship.add(barrel);
+
+    const muzzle = addMesh(mk(new THREE.CylinderGeometry(0.11, 0.095, 0.22, 12), M.chrome));
+    muzzle.rotation.x = Math.PI / 2;
+    muzzle.position.set(bx, -1.66, -12.0);
+    ship.add(muzzle);
+  }
+
+  // Cannon cooling vents
+  for (let v = 0; v < 5; v++) {
+    const vent = addMesh(mk(new THREE.BoxGeometry(0.6, 0.06, 0.45), M.panelDk));
+    vent.position.set(0, -1.52, -5.8 + v * 1.1);
+    ship.add(vent);
+  }
+
+  // Capacitor banks
+  for (const s of [-1, 1]) {
+    const cap = addMesh(mk(new THREE.BoxGeometry(0.35, 0.4, 2.0), M.detail));
+    cap.position.set(s * 0.5, -1.3, -7.5);
+    ship.add(cap);
+  }
+}
+
+// ─── 10. TORPEDO LAUNCHERS ────────────────────────────────────────
+for (const s of [-1, 1]) {
+  for (let r = 0; r < 3; r++) {
+    const tube = addMesh(mk(new THREE.CylinderGeometry(0.125, 0.125, 1.8, 10), M.wpn));
+    tube.rotation.x = Math.PI / 2;
+    tube.position.set(s * 0.5, -1.7 + r * 0.32, -9.2);
+    ship.add(tube);
+
+    const door = addMesh(mk(new THREE.CircleGeometry(0.125, 10), M.panelDk));
+    door.rotation.x = Math.PI / 2;
+    door.position.set(s * 0.5, -1.7 + r * 0.32, -10.0);
+    ship.add(door);
+
+    // Tube reinforcement rings
+    for (let rr = 0; rr < 2; rr++) {
+      const ring = addMesh(mk(new THREE.TorusGeometry(0.13, 0.02, 6, 12), M.panelDk));
+      ring.rotation.y = Math.PI / 2;
+      ring.position.set(s * 0.5, -1.7 + r * 0.32, -8.5 - rr * 0.8);
+      ship.add(ring);
+    }
+  }
+}
+
+// ─── 11. NOSE SENSOR ARRAY ────────────────────────────────────────
+{
+  // Main sensor dome (high-poly sphere)
+  const dome = addMesh(mk(new THREE.SphereGeometry(0.56, 22, 12), M.sensB));
+  dome.position.set(0, 0, -13.2);
+  ship.add(dome);
+
+  // Sensor housing ring
+  const ring = addMesh(mk(new THREE.TorusGeometry(0.62, 0.072, 10, 28), M.acc));
+  ring.rotation.x = Math.PI / 2;
+  ring.position.set(0, 0, -13.2);
+  ship.add(ring);
+
+  // Emitter array (8 nodes)
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    const em = addMesh(mk(new THREE.CylinderGeometry(0.042, 0.062, 0.45, 8), M.accGlow));
+    em.rotation.x = Math.PI / 2;
+    em.position.set(Math.cos(a) * 0.56, Math.sin(a) * 0.35, -13.6);
+    ship.add(em);
+  }
+
+  // Forward sensor bar
+  const sbar = addMesh(mk(new THREE.BoxGeometry(3.4, 0.16, 0.35), M.acc));
+  sbar.position.set(0, 0.2, -12.3);
+  ship.add(sbar);
+
+  // Sensor sub-arrays
+  for (let s = -1; s <= 1; s += 2) {
+    const sub = addMesh(mk(new THREE.SphereGeometry(0.18, 10, 8), M.sensB));
+    sub.position.set(s * 0.8, -0.3, -13.0);
+    ship.add(sub);
+  }
+}
+
+// ─── 12. HULL SIDE ACCENT STRIPES & DETAILS ──────────────────────
+for (const s of [-1, 1]) {
+  // Long side stripe
+  const stripe = addMesh(mk(new THREE.BoxGeometry(0.062, 0.32, 12.0), M.accGlow));
+  stripe.position.set(s * 2.55, 0.6, -4.5);
+  ship.add(stripe);
+
+  // Lower side stripe
+  const stripeL = addMesh(mk(new THREE.BoxGeometry(0.062, 0.25, 10.5), M.acc));
+  stripeL.position.set(s * 2.55, -0.45, -4.0);
+  ship.add(stripeL);
+
+  // Fore accent dots (8 nodes)
+  for (let d = 0; d < 8; d++) {
+    const dot = addMesh(mk(new THREE.SphereGeometry(0.08, 8, 5), M.accGlow));
+    dot.position.set(s * 2.58, 0.6, -9.0 + d * 1.3);
+    ship.add(dot);
+  }
+
+  // Side panel array
+  for (let p = 0; p < 6; p++) {
+    const panel = addMesh(mk(new THREE.BoxGeometry(0.3, 0.15, 0.25), M.panelAcc));
+    panel.position.set(s * 2.4, -0.2, -7.5 + p * 2.2);
+    ship.add(panel);
+  }
+}
+
+// ─── 13. RADIATOR FINS (enhanced) ────────────────────────────────
+const finDefs = [
+  { pos: [-2.2, 1.65, 8.0], rot: [0, 0,  0.32] },
+  { pos: [ 2.2, 1.65, 8.0], rot: [0, 0, -0.32] },
+  { pos: [-2.2,-1.62, 8.0], rot: [0, 0, -0.32] },
+  { pos: [ 2.2,-1.62, 8.0], rot: [0, 0,  0.32] },
+];
+for (const { pos, rot } of finDefs) {
+  const fin = addMesh(mk(new THREE.PlaneGeometry(2.6, 2.2, 4, 4), M.rad));
+  fin.position.set(...pos);
+  fin.rotation.set(...rot);
+  ship.add(fin);
+
+  // Fin structural ribs
+  for (const r of [-0.8, 0, 0.8]) {
+    const rib = addMesh(mk(new THREE.BoxGeometry(0.05, 2.2, 0.08), M.panelDk));
+    rib.position.set(pos[0], pos[1], pos[2] + r);
+    ship.add(rib);
+  }
+
+  // Fin cooling channels
+  for (let c = 0; c < 3; c++) {
+    const channel = addMesh(mk(new THREE.BoxGeometry(2.4, 0.04, 0.06), M.grill));
+    channel.position.set(pos[0], pos[1] - 0.7 + c * 0.7, pos[2]);
+    ship.add(channel);
+  }
+}
+
+// ─── 14. POWER DISTRIBUTION CONDUITS ──────────────────────────────
+for (let c = 0; c < 8; c++) {
+  const angle = (c / 8) * Math.PI * 2;
+  const radius = 2.8;
+  const conduit = addMesh(mk(new THREE.CylinderGeometry(0.06, 0.06, 12, 6), M.panelDk));
+  conduit.rotation.z = angle;
+  conduit.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
+  ship.add(conduit);
+}
+
+// ─── 15. ADDITIONAL MICRO-DETAILS ────────────────────────────────
+// Hundreds of tiny details for ultra-high complexity
+for (let i = 0; i < 40; i++) {
+  const x = (Math.random() - 0.5) * 5.5;
+  const y = (Math.random() - 0.5) * 3.0;
+  const z = (Math.random() - 0.5) * 18;
+  const size = 0.06 + Math.random() * 0.12;
+  const detail = addMesh(mk(new THREE.BoxGeometry(size, size * 0.6, size), M.detail));
+  detail.position.set(x, y, z);
+  detail.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+  ship.add(detail);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UI & RENDERING
+// ═══════════════════════════════════════════════════════════════
+let wireframe = false, autoRot = true, lightMode = 0;
+
+function updateStats() {
+  document.getElementById('s-poly').textContent = `POLYGONS:  ${polyCount.toLocaleString()}`;
+  document.getElementById('s-mesh').textContent = `MESHES:    ${meshCount}`;
+  document.getElementById('s-mat').textContent = `MATERIALS: ${Object.keys(M).length}`;
+}
+
+function toggleWire() {
+  wireframe = !wireframe;
+  ship.traverse(m => { if (m.material) m.material.wireframe = wireframe; });
+  document.getElementById('b-wire').classList.toggle('on');
+}
+
+function toggleRot() {
+  autoRot = !autoRot;
+  controls.autoRotate = autoRot;
+  document.getElementById('b-rot').classList.toggle('on');
+}
+
+function cycleLight() {
+  lightMode = (lightMode + 1) % 3;
+  const modes = [
+    { amb: 0x0a1428, sun: 3.2 },
+    { amb: 0x1a2a3a, sun: 2.0 },
+    { amb: 0x000000, sun: 4.5 },
+  ];
+  const m = modes[lightMode];
+  ambient.color.setHex(m.amb);
+  sun.intensity = m.sun;
+}
+
+function resetCam() {
+  camera.position.copy(CAM_HOME);
+  controls.target.set(0, 0, 0);
+  controls.update();
+}
+
+function showToast() {
+  const t = document.getElementById('toast');
+  t.style.opacity = '1';
+  setTimeout(() => t.style.opacity = '0', 2000);
+}
+
+function exportGLB() {
+  const exporter = new GLTFExporter();
+  exporter.parse(ship, (gltf) => {
+    const blob = new Blob([gltf], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'prometheus-v2.glb';
+    a.click();
+    showToast();
+  });
+}
+
+function exportOBJ() {
+  const exporter = new OBJExporter();
+  const obj = exporter.parse(ship);
+  const blob = new Blob([obj], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'prometheus-v2.obj';
+  a.click();
+  showToast();
+}
+
+// Loader animation
+let loadProgress = 0;
+const loadInterval = setInterval(() => {
+  loadProgress += Math.random() * 25;
+  if (loadProgress > 100) loadProgress = 100;
+  document.getElementById('loader-fill').style.width = loadProgress + '%';
+  if (loadProgress === 100) {
+    clearInterval(loadInterval);
+    setTimeout(() => {
+      document.getElementById('loader').style.opacity = '0';
+      document.getElementById('loader').style.pointerEvents = 'none';
+    }, 500);
+  }
+}, 200);
+
+updateStats();
+
+// ═══════════════════════════════════════════════════════════════
+// ANIMATION LOOP
+// ═══════════════════════════════════════════════════════════════
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  
+  // Subtle engine light pulsing
+  const pulse = 0.7 + Math.sin(Date.now() * 0.003) * 0.3;
+  eLights.forEach(l => l.intensity *= pulse * 0.5 + 0.5);
+
+  renderer.render(scene, camera);
+}
+
+animate();
+
+// Handle window resize
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// Expose functions globally
+window.toggleWire = toggleWire;
+window.toggleRot = toggleRot;
+window.cycleLight = cycleLight;
+window.resetCam = resetCam;
+window.exportGLB = exportGLB;
+window.exportOBJ = exportOBJ;
+</script>
+</body>
+</html>
