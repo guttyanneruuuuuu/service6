@@ -3,18 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" content="#05060a" />
+    <meta name="theme-color" content="#030407" />
     <title>Zeropoint — Teleport Anywhere on Earth</title>
-    <meta name="description" content="Step through the door. Zeropoint is a real-time teleportation network — visit any place on Earth in a single tap, and cross paths with strangers from anywhere." />
+    <meta name="description" content="The world's first real-time teleportation network. Step through the door and instantly connect with others across the globe." />
 
     <!-- Open Graph / Social -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Zeropoint — Teleport Anywhere on Earth" />
-    <meta property="og:description" content="Step through the door. Cross paths with strangers in real-time, in real places, from your browser." />
+    <meta property="og:description" content="The world's first real-time teleportation network. Instant presence, anywhere." />
     <meta property="og:image" content="./og.svg" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Zeropoint — Teleport Anywhere on Earth" />
-    <meta name="twitter:description" content="A digital Anywhere Door. Visit any place on Earth, together." />
+    <meta name="twitter:description" content="The world's first real-time teleportation network." />
     <meta name="twitter:image" content="./og.svg" />
 
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
@@ -22,6 +22,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./src/styles/main.css" />
+    <link rel="stylesheet" href="./src/styles/redesign.css" />
   </head>
   <body>
     <!-- Loading boot screen -->
@@ -36,177 +37,244 @@
 
     <!-- Landing / Home -->
     <main id="landing" class="landing" hidden>
-      <nav class="nav">
-        <div class="nav__brand">
-          <span class="nav__dot"></span>
-          <span class="nav__name">ZEROPOINT</span>
-        </div>
-        <div class="nav__links">
-          <a href="#how" class="nav__link">How it works</a>
-          <a href="#places" class="nav__link">Places</a>
-          <a href="#compare" class="nav__link">Why not Maps?</a>
-          <a href="#economy" class="nav__link">Economy</a>
-          <a href="#pro" class="nav__link">Pro</a>
-          <button class="nav__cta" id="navCta">Open the Door</button>
-        </div>
-      </nav>
-
-      <section class="hero">
-        <div class="hero__bg" id="heroBg"></div>
-        <div class="hero__gradient"></div>
-
-        <div class="hero__content">
-          <div class="hero__tag">
-            <span class="pulse"></span>
-            <span>Real-time presence engine · P2P · No downloads</span>
-          </div>
-          <h1 class="hero__title">
-            The world is<br/>
-            <span class="hero__title-gradient">just a door away.</span>
-          </h1>
-          <p class="hero__sub">
-            Step through the digital Anywhere Door. Instant teleportation to the world's most beautiful places. Connect with others, live and in real-time.
-          </p>
-          <div class="hero__actions">
-            <button class="btn btn--primary" id="heroEnter">
-              <span>Open the Door</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-            </button>
-            <button class="btn btn--ghost" id="heroHow">How it works</button>
-            <button class="btn btn--ghost" id="heroWaitlist">Join Creator waitlist</button>
-          </div>
-          <div class="hero__stats">
-            <div class="stat"><b id="statPlaces">—</b><span>places</span></div>
-            <div class="stat"><b id="statOnline">—</b><span>travellers online</span></div>
-            <div class="stat"><b id="statDoorsToday">—</b><span>doors opened today</span></div>
-          </div>
-        </div>
-
-        <div class="hero__door" aria-hidden="true">
-          <div class="door">
-            <div class="door__frame"></div>
-            <div class="door__portal"></div>
-            <div class="door__glow"></div>
-          </div>
-        </div>
-      </section>
-
-      <section id="how" class="how">
-        <h2 class="section__title">How it works</h2>
-        <div class="how__grid">
-          <div class="how__card">
-            <div class="how__n">01</div>
-            <h3>Pick a place</h3>
-            <p>Tokyo rooftops. Himalayan passes. A tiny café in Lisbon. Browse a living atlas of real 360° locations.</p>
-          </div>
-          <div class="how__card">
-            <div class="how__n">02</div>
-            <h3>Open the door</h3>
-            <p>A single tap. No install. No account. The world reassembles around you in seconds.</p>
-          </div>
-          <div class="how__card">
-            <div class="how__n">03</div>
-            <h3>Cross paths</h3>
-            <p>Other travellers are really there, right now. Wave. Say hi. Leave a mark on the place.</p>
-          </div>
-        </div>
-      </section>
-
-      <section id="places" class="places">
-        <div class="places__head">
-          <h2 class="section__title">Today's doors</h2>
-          <p class="section__sub">Handpicked locations with social energy, mission rewards, and room-level live presence.</p>
-        </div>
-        <div class="places__grid" id="placesGrid"></div>
-      </section>
-
-      <section id="compare" class="compare">
-        <div class="compare__head">
-          <h2 class="section__title">More than a panorama</h2>
-          <p class="section__sub">Maps show a place. Zeropoint turns it into a room.</p>
-        </div>
-        <div class="compare__grid">
-          <article class="compare__card">
-            <h3>Google Earth style viewers</h3>
-            <ul>
-              <li>Mostly solo browsing</li>
-              <li>Weak creator monetization</li>
-              <li>No room-native social layer</li>
-            </ul>
-          </article>
-          <article class="compare__card compare__card--accent">
-            <h3>Zeropoint Door Rooms</h3>
-            <ul>
-              <li>Live co-presence in every door</li>
-              <li>Creator doors with paid unlocks</li>
-              <li>Missions, badges, and replay loops</li>
-            </ul>
-          </article>
-        </div>
-      </section>
-
-      <section id="economy" class="economy">
-        <div class="economy__head">
-          <h2 class="section__title">Door economy</h2>
-          <p class="section__sub">Designed to monetize creators, brands, and premium travellers without breaking the free core.</p>
-        </div>
-        <div class="economy__grid">
-          <article class="economy__item">
-            <div class="economy__kicker">PASS</div>
-            <h3>Door Pass</h3>
-            <p>Monthly pass that unlocks private rooms, HD texture streams, and passport streak boosts.</p>
-            <div class="economy__price">¥480/mo</div>
-          </article>
-          <article class="economy__item">
-            <div class="economy__kicker">CREATOR</div>
-            <h3>Creator Rooms</h3>
-            <p>Upload your own 360 places, set ticketed events, and receive payout share from paid entries.</p>
-            <div class="economy__price">¥1,980/mo</div>
-          </article>
-          <article class="economy__item">
-            <div class="economy__kicker">BRAND</div>
-            <h3>Sponsored Doors</h3>
-            <p>Limited sponsored placements with launch analytics and branded collectible missions.</p>
-            <div class="economy__price">from ¥80,000</div>
-          </article>
-        </div>
-      </section>
-
-      <section id="pro" class="pro">
-        <div class="pro__card">
-          <div class="pro__badge">ZEROPOINT PRO</div>
-          <h2>Own the room, not just the image.</h2>
-          <p>Run paid creator doors, host ticketed sessions, and launch collectible mission drops. Part of every Pro subscription funds next-generation spatial technology research.</p>
-          <div class="pro__price">
-            <span class="pro__amount">¥480</span>
-            <span class="pro__period">/ month</span>
-          </div>
-          <button class="btn btn--primary" id="proCta">Start Pro waitlist</button>
-          <div class="pro__meta">Early supporters get a lifetime price-lock.</div>
-        </div>
-      </section>
-
-      <section class="mission" id="mission">
-        <div class="mission__card">
-          <div class="mission__badge">DAILY LOOP</div>
-          <h2>Passport missions</h2>
-          <p>Open 3 unique doors, leave 1 reaction, and meet 1 new traveller to complete your daily mission and keep your streak alive.</p>
-          <div class="mission__row">
-            <div class="mission__pill">+35 XP</div>
-            <div class="mission__pill">1 Door Key</div>
-            <div class="mission__pill">Streak Multiplier</div>
-          </div>
-        </div>
-      </section>
-
-      <footer class="footer">
-        <div class="footer__brand">
-          <span class="nav__dot"></span>
+      <!-- Floating Navigation Dock -->
+      <nav class="nav-dock">
+        <div class="nav-dock__logo">
+          <span class="nav-dock__dot"></span>
           <span>ZEROPOINT</span>
         </div>
-        <div class="footer__text">
-          Built as the first step toward a real Anywhere Door.<br/>
-          <span class="footer__dim">© 2026 Zeropoint. A digital teleportation network.</span>
+        <div class="nav-dock__links">
+          <a href="#experience" class="nav-dock__link">Experience</a>
+          <a href="#features" class="nav-dock__link">Features</a>
+          <a href="#pricing" class="nav-dock__link">Pricing</a>
+        </div>
+        <button class="nav-dock__cta" id="navCta">Enter</button>
+      </nav>
+
+      <!-- Hero Section - Full Immersion -->
+      <section class="hero-immersive">
+        <div class="hero-immersive__bg" id="heroBg"></div>
+        <div class="hero-immersive__gradient"></div>
+        
+        <div class="hero-immersive__content">
+          <div class="hero-immersive__preheading">
+            <span class="pulse"></span>
+            <span>Real-time Presence · P2P · No Installation</span>
+          </div>
+          
+          <h1 class="hero-immersive__title">
+            <span class="hero-immersive__title-line">The world is</span>
+            <span class="hero-immersive__title-line hero-immersive__title-highlight">just a door away</span>
+          </h1>
+          
+          <p class="hero-immersive__description">
+            Instantly teleport to any place on Earth. Connect with others in real-time. Experience presence without distance.
+          </p>
+
+          <div class="hero-immersive__stats">
+            <div class="stat-card">
+              <div class="stat-card__number" id="statPlaces">—</div>
+              <div class="stat-card__label">Places</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card__number" id="statOnline">—</div>
+              <div class="stat-card__label">Online Now</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card__number" id="statDoorsToday">—</div>
+              <div class="stat-card__label">Doors Today</div>
+            </div>
+          </div>
+
+          <button class="btn-hero" id="heroEnter">
+            <span>Open the Door</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+
+        <div class="hero-immersive__visual" aria-hidden="true">
+          <div class="door-hero">
+            <div class="door-hero__frame"></div>
+            <div class="door-hero__portal"></div>
+            <div class="door-hero__glow"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Experience Section -->
+      <section id="experience" class="experience-section">
+        <div class="experience-section__container">
+          <div class="experience-section__header">
+            <h2>How Teleportation Works</h2>
+            <p>Three steps to connect with the world</p>
+          </div>
+
+          <div class="experience-grid">
+            <div class="experience-card">
+              <div class="experience-card__number">01</div>
+              <h3>Choose Your Destination</h3>
+              <p>Browse stunning 360° locations from around the globe. Each door is a real place, waiting for you.</p>
+              <div class="experience-card__visual">
+                <div class="experience-card__icon">🌍</div>
+              </div>
+            </div>
+
+            <div class="experience-card">
+              <div class="experience-card__number">02</div>
+              <h3>Step Through</h3>
+              <p>One tap. The world reassembles around you in seconds. No downloads, no accounts, no friction.</p>
+              <div class="experience-card__visual">
+                <div class="experience-card__icon">🚪</div>
+              </div>
+            </div>
+
+            <div class="experience-card">
+              <div class="experience-card__number">03</div>
+              <h3>Connect & Share</h3>
+              <p>Meet other travellers in real-time. Wave, react, chat. Leave your mark on the place.</p>
+              <div class="experience-card__visual">
+                <div class="experience-card__icon">✨</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Featured Places Section -->
+      <section id="places" class="places-showcase">
+        <div class="places-showcase__container">
+          <div class="places-showcase__header">
+            <h2>Today's Doors</h2>
+            <p>Handpicked locations with live presence</p>
+            <button class="btn-secondary" id="heroHow">Explore All</button>
+          </div>
+          <div class="places-showcase__grid" id="placesGrid"></div>
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section id="features" class="features-section">
+        <div class="features-section__container">
+          <h2>Why Zeropoint?</h2>
+          
+          <div class="features-grid">
+            <div class="feature-item">
+              <div class="feature-item__icon">🎬</div>
+              <h3>Cinematic Presence</h3>
+              <p>High-fidelity 3D environments with real-time avatars. See others, be seen.</p>
+            </div>
+
+            <div class="feature-item">
+              <div class="feature-item__icon">⚡</div>
+              <h3>Instant Connection</h3>
+              <p>P2P technology means zero latency. Pure real-time presence.</p>
+            </div>
+
+            <div class="feature-item">
+              <div class="feature-item__icon">🌐</div>
+              <h3>Browser Native</h3>
+              <p>No app. No installation. Works everywhere. Open in any browser.</p>
+            </div>
+
+            <div class="feature-item">
+              <div class="feature-item__icon">🔐</div>
+              <h3>Privacy First</h3>
+              <p>Decentralized architecture. Your data stays yours.</p>
+            </div>
+
+            <div class="feature-item">
+              <div class="feature-item__icon">🎨</div>
+              <h3>Creator Economy</h3>
+              <p>Upload custom worlds. Host events. Earn from your creations.</p>
+            </div>
+
+            <div class="feature-item">
+              <div class="feature-item__icon">🏆</div>
+              <h3>Missions & Rewards</h3>
+              <p>Daily challenges, streaks, and collectibles. Keep coming back.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pricing Section -->
+      <section id="pricing" class="pricing-section">
+        <div class="pricing-section__container">
+          <h2>Simple, Transparent Pricing</h2>
+          <p>Everything you need to explore, create, and connect</p>
+
+          <div class="pricing-grid">
+            <div class="pricing-card">
+              <div class="pricing-card__badge">FREE</div>
+              <h3>Explorer</h3>
+              <p class="pricing-card__price">$0</p>
+              <ul class="pricing-card__features">
+                <li>✓ Access all public doors</li>
+                <li>✓ Real-time presence</li>
+                <li>✓ Chat & reactions</li>
+                <li>✓ Daily missions</li>
+              </ul>
+              <button class="btn-secondary">Get Started</button>
+            </div>
+
+            <div class="pricing-card pricing-card--featured">
+              <div class="pricing-card__badge">POPULAR</div>
+              <h3>Creator</h3>
+              <p class="pricing-card__price">$9.99<span>/mo</span></p>
+              <ul class="pricing-card__features">
+                <li>✓ Everything in Explorer</li>
+                <li>✓ Upload custom worlds</li>
+                <li>✓ Host ticketed events</li>
+                <li>✓ Earn from entries</li>
+                <li>✓ Advanced analytics</li>
+              </ul>
+              <button class="btn-primary">Start Creating</button>
+            </div>
+
+            <div class="pricing-card">
+              <div class="pricing-card__badge">ENTERPRISE</div>
+              <h3>Brand</h3>
+              <p class="pricing-card__price">Custom</p>
+              <ul class="pricing-card__features">
+                <li>✓ Branded experiences</li>
+                <li>✓ Custom integrations</li>
+                <li>✓ Dedicated support</li>
+                <li>✓ Analytics dashboard</li>
+              </ul>
+              <button class="btn-secondary">Contact Sales</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA Section -->
+      <section class="cta-section">
+        <div class="cta-section__content">
+          <h2>Ready to Explore?</h2>
+          <p>Join thousands of travellers connecting across the globe right now.</p>
+          <button class="btn-primary btn-large" id="heroWaitlist">Open the Door</button>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="footer-new">
+        <div class="footer-new__container">
+          <div class="footer-new__top">
+            <div class="footer-new__brand">
+              <span class="nav-dock__dot"></span>
+              <span>ZEROPOINT</span>
+            </div>
+            <div class="footer-new__links">
+              <a href="#experience">Experience</a>
+              <a href="#features">Features</a>
+              <a href="#pricing">Pricing</a>
+              <a href="#">Privacy</a>
+              <a href="#">Terms</a>
+            </div>
+          </div>
+          <div class="footer-new__bottom">
+            <p>© 2026 Zeropoint. The world's first real-time teleportation network.</p>
+          </div>
         </div>
       </footer>
     </main>
@@ -255,95 +323,90 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             <span>Exit</span>
           </button>
-          <div class="scene__place" id="scenePlace">
-            <div class="scene__placeName">—</div>
-            <div class="scene__placeMeta">—</div>
+          <div class="scene__place">
+            <div class="scene__placeName" id="scenePlaceName">—</div>
+            <div class="scene__placeMeta" id="scenePlaceMeta">—</div>
           </div>
-          <button class="hud-btn" id="switchBtn" title="Switch door">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>
-            <span>Switch</span>
-          </button>
-        </div>
-
-        <div class="scene__compass" id="compass">
-          <div class="scene__compass-inner"></div>
-          <div class="scene__compass-needle"></div>
-          <div class="scene__compass-n">N</div>
-        </div>
-
-        <div class="scene__side">
-          <button class="hud-btn hud-btn--icon" id="emoteBtn" title="React">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          </button>
-          <button class="hud-btn hud-btn--icon" id="shareBtn" title="Share this door">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4"/><path d="m15.4 6.5-6.8 4"/></svg>
-          </button>
-          <button class="hud-btn hud-btn--icon" id="fsBtn" title="Fullscreen">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          <button class="hud-btn hud-btn--icon" id="switchBtn" title="Switch door">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m0 0l4 4m10-4v12m0 0l4-4m0 0l-4-4"/></svg>
           </button>
         </div>
 
         <div class="scene__bottom">
           <div class="scene__people" id="scenePeople">
-            <div class="scene__people-dot"></div>
-            <span id="sceneCount">1</span>
-            <span class="scene__people-label">here now</span>
+            <div class="people-counter">
+              <span id="peopleCount">0</span>
+              <span>travellers</span>
+            </div>
           </div>
-          <div class="scene__emote-rail" id="emoteRail" hidden>
-            <button data-emote="👋">👋</button>
-            <button data-emote="❤️">❤️</button>
-            <button data-emote="🔥">🔥</button>
-            <button data-emote="✨">✨</button>
-            <button data-emote="🌏">🌏</button>
-            <button data-emote="😂">😂</button>
-          </div>
-          <form class="scene__chat" id="sceneChatForm" autocomplete="off">
-            <input id="sceneChatInput" type="text" placeholder="Say something to the room…" maxlength="140" />
-            <button type="submit" class="hud-btn hud-btn--send" aria-label="Send">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+
+          <div class="scene__actions">
+            <button class="hud-btn hud-btn--icon" id="reactBtn" title="React">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><circle cx="12" cy="12" r="9"/></svg>
             </button>
-          </form>
+            <button class="hud-btn hud-btn--icon" id="shareBtn" title="Share">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </button>
+            <button class="hud-btn hud-btn--icon" id="fullscreenBtn" title="Fullscreen">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            </button>
+          </div>
+
+          <div class="scene__chat">
+            <div class="chat-messages" id="chatMessages"></div>
+            <form class="chat-form" id="chatForm">
+              <input type="text" id="chatInput" placeholder="Say something…" maxlength="140" />
+              <button type="submit" class="hud-btn hud-btn--send" title="Send">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6915026,12.4744748 L3.50612381,13.2599618 C3.19218622,13.2599618 3.03521743,13.4170592 3.03521743,13.5741566 L1.15159189,20.0151496 C0.8376543,20.8006365 0.99,21.89 1.77946707,22.52 C2.41,22.99 3.50612381,23.1 4.13399899,22.8429026 L21.714504,14.0454487 C22.6563168,13.5741566 23.1272231,12.6315722 22.9702544,11.6889879 L4.13399899,1.16151496 C3.34915502,0.9 2.40734225,1.00636533 1.77946707,1.4776575 C0.994623095,2.10604706 0.837654326,3.0486314 1.15159189,3.99701575 L3.03521743,10.4380088 C3.03521743,10.5950699 3.19218622,10.7521673 3.50612381,10.7521673 L16.6915026,11.5376542 C16.6915026,11.5376542 17.1624089,11.5376542 17.1624089,12.0089463 C17.1624089,12.4744748 16.6915026,12.4744748 16.6915026,12.4744748 Z"/></svg>
+              </button>
+            </form>
+          </div>
         </div>
       </div>
 
-      <div class="scene__toast" id="sceneToast" hidden></div>
-    </div>
-
-    <!-- Onboarding (nickname + avatar) -->
-    <div id="onboard" class="onboard" hidden>
-      <div class="onboard__overlay"></div>
-      <div class="onboard__panel">
-        <h2>One last step</h2>
-        <p>Choose a name and a color. Other travellers will see you.</p>
-        <div class="onboard__avatars" id="onboardAvatars"></div>
-        <input id="onboardName" type="text" placeholder="Your traveller name" maxlength="20" />
-        <button class="btn btn--primary" id="onboardGo">Step through</button>
+      <div class="scene__compass" id="sceneCompass" aria-hidden="true">
+        <svg width="60" height="60" viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="30" cy="30" r="28" opacity="0.2"/>
+          <path d="M30 8 L32 28 L30 32 L28 28 Z" opacity="0.8"/>
+          <text x="30" y="50" text-anchor="middle" font-size="10" opacity="0.5">N</text>
+        </svg>
       </div>
     </div>
 
+    <!-- Onboarding modal -->
+    <div id="onboard" class="onboard" hidden>
+      <div class="onboard__card">
+        <h2>Welcome to Zeropoint</h2>
+        <p>Choose your avatar and enter your name</p>
+
+        <div class="onboard__avatars" id="onboardAvatars"></div>
+
+        <input type="text" id="onboardName" class="onboard__input" placeholder="Your name" maxlength="20" />
+        <button class="btn-primary" id="onboardGo">Enter the World</button>
+      </div>
+    </div>
+
+    <!-- Waitlist modal -->
     <div id="waitlist" class="waitlist" hidden>
       <div class="waitlist__overlay" data-waitlist-close></div>
-      <div class="waitlist__panel">
-        <div class="waitlist__head">
-          <h2>Join the monetization beta</h2>
-          <button class="icon-btn" data-waitlist-close aria-label="Close">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-          </button>
-        </div>
-        <p>Get early access to Door Pass, Creator Rooms, and Sponsored Doors.</p>
-        <form id="waitlistForm" class="waitlist__form">
-          <input id="waitlistEmail" type="email" placeholder="you@example.com" required />
+      <div class="waitlist__card">
+        <button class="icon-btn" data-waitlist-close aria-label="Close">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+        <h2>Join the Waitlist</h2>
+        <form id="waitlistForm">
           <select id="waitlistPlan">
-            <option value="door-pass">Door Pass</option>
-            <option value="creator-rooms">Creator Rooms</option>
-            <option value="sponsored-doors">Sponsored Doors</option>
+            <option value="door-pass">Door Pass (¥480/mo)</option>
+            <option value="creator-rooms">Creator Rooms (¥1,980/mo)</option>
           </select>
-          <button class="btn btn--primary" type="submit">Reserve my slot</button>
+          <input type="email" id="waitlistEmail" placeholder="your@email.com" required />
+          <button type="submit" class="btn-primary">Join</button>
         </form>
       </div>
     </div>
 
-    <div id="globalToast" class="global-toast" hidden></div>
+    <!-- Toast notifications -->
+    <div id="toastHost" class="toast-host"></div>
 
     <script type="module" src="./src/main.js"></script>
   </body>
