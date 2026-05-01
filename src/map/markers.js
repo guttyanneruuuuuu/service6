@@ -122,11 +122,20 @@ export class MarkerLayer {
   _addMarker(pin, animate = false) {
     const cat = getCategory(pin.cat);
     const el = document.createElement('div');
-    el.className = 'pinly-marker' + (animate ? ' is-new' : '') + (pin.official ? ' is-official' : '');
+
+    // Compute time-decay age class based on pin timestamp
+    const ageHours = pin.ts ? (Date.now() / 1000 - pin.ts) / 3600 : 0;
+    const ageClass = ageHours >= 24 ? ' is-old' : ageHours >= 6 ? ' is-stale' : '';
+
+    el.className = 'pinly-marker' + (animate ? ' is-new' : '') + (pin.official ? ' is-official' : '') + ageClass;
     el.style.setProperty('--pin-color', cat.color);
+    // Wrap content in __inner so hover lift transforms don't fight
+    // MapLibre's inline `transform` that controls geographic positioning.
     el.innerHTML = `
-      <div class="pinly-marker__pin"></div>
-      <div class="pinly-marker__label">${escapeHTML(pin.text)}</div>
+      <div class="pinly-marker__inner">
+        <div class="pinly-marker__pin"></div>
+        <div class="pinly-marker__label">${escapeHTML(pin.text)}</div>
+      </div>
     `;
     el.addEventListener('click', (e) => {
       e.stopPropagation();

@@ -5,16 +5,16 @@
    ============================================================ */
 
 :root {
-  --bg-0: #0a0d14;
-  --bg-1: #10131d;
-  --bg-2: #171b28;
-  --bg-3: #1f2436;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.16);
+  --bg-0: #0d111e;
+  --bg-1: #131826;
+  --bg-2: #1a1f30;
+  --bg-3: #242940;
+  --line: rgba(255, 255, 255, 0.10);
+  --line-strong: rgba(255, 255, 255, 0.20);
 
   --text: #f3f5fb;
-  --text-dim: rgba(243, 245, 251, 0.66);
-  --text-mute: rgba(243, 245, 251, 0.42);
+  --text-dim: rgba(243, 245, 251, 0.75);
+  --text-mute: rgba(243, 245, 251, 0.50);
 
   --pink: #ff2e6d;
   --pink-2: #ff5b8a;
@@ -71,7 +71,7 @@ input, textarea { font-family: inherit; }
   position: fixed; inset: 0; z-index: 9999;
   display: grid; place-items: center; gap: 14px;
   background:
-    radial-gradient(closest-side, #131726 0%, #0a0d14 80%),
+    radial-gradient(closest-side, #17203a 0%, #0d111e 80%),
     var(--bg-0);
   animation: fadeIn .35s var(--ease);
 }
@@ -103,7 +103,7 @@ input, textarea { font-family: inherit; }
 .map .maplibregl-canvas-container { cursor: grab; }
 .map .maplibregl-canvas-container.maplibregl-interactive:active { cursor: grabbing; }
 .map .maplibregl-ctrl-attrib {
-  background: rgba(10,13,20,0.8);
+  background: rgba(13,17,30,0.85);
   color: var(--text-mute);
   font-size: 10px;
   border-radius: 8px;
@@ -118,7 +118,7 @@ input, textarea { font-family: inherit; }
   display: flex; align-items: center; gap: 14px;
   padding: 14px 18px;
   padding-top: max(14px, env(safe-area-inset-top));
-  background: linear-gradient(to bottom, rgba(10,13,20,.85), rgba(10,13,20,.55) 70%, transparent);
+  background: linear-gradient(to bottom, rgba(13,17,30,.90), rgba(13,17,30,.58) 70%, transparent);
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
 }
@@ -139,14 +139,14 @@ input, textarea { font-family: inherit; }
   display: flex; align-items: center; gap: 10px;
   height: 42px; padding: 0 14px;
   border-radius: 999px;
-  background: rgba(20,24,36,.6);
+  background: rgba(26,31,48,.65);
   border: 1px solid var(--line);
   color: var(--text-mute);
   transition: border-color .2s, background .2s;
 }
 .appbar__search:focus-within {
   border-color: rgba(255,46,109,.4);
-  background: rgba(20,24,36,.85);
+  background: rgba(26,31,48,.90);
   color: var(--text-dim);
 }
 .appbar__search input {
@@ -160,13 +160,13 @@ input, textarea { font-family: inherit; }
 .iconbtn {
   width: 42px; height: 42px; border-radius: 50%;
   display: grid; place-items: center;
-  background: rgba(20,24,36,.6);
+  background: rgba(26,31,48,.65);
   border: 1px solid var(--line);
   color: var(--text); cursor: pointer;
   transition: transform .2s var(--ease-spring), background .2s, border-color .2s, box-shadow .2s;
 }
 .iconbtn:hover {
-  background: rgba(28,33,49,.85);
+  background: rgba(36,41,64,.90);
   border-color: var(--line-strong);
   transform: translateY(-1px);
 }
@@ -190,7 +190,7 @@ input, textarea { font-family: inherit; }
   z-index: 40;
   display: flex; gap: 6px; padding: 6px;
   border-radius: 999px;
-  background: rgba(20,24,36,.7);
+  background: rgba(26,31,48,.72);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
   border: 1px solid var(--line);
@@ -222,7 +222,7 @@ input, textarea { font-family: inherit; }
 .trend {
   position: fixed; top: 0; right: 0; bottom: 0; z-index: 60;
   width: min(380px, 92vw);
-  background: linear-gradient(180deg, #131726, #0a0d14);
+  background: linear-gradient(180deg, #17203a, #0d111e);
   border-left: 1px solid var(--line-strong);
   box-shadow: -20px 0 60px rgba(0,0,0,.5);
   display: flex; flex-direction: column;
@@ -319,7 +319,7 @@ input, textarea { font-family: inherit; }
 .sheet__panel {
   position: relative;
   width: min(560px, 100%);
-  background: linear-gradient(180deg, #161a28, #0e111a);
+  background: linear-gradient(180deg, #1a2035, #131826);
   border-radius: 24px 24px 0 0;
   border: 1px solid var(--line-strong);
   border-bottom: none;
@@ -446,7 +446,7 @@ input, textarea { font-family: inherit; }
 .detail__panel {
   position: relative;
   width: min(440px, 100%);
-  background: linear-gradient(180deg, #161a28, #0e111a);
+  background: linear-gradient(180deg, #1a2035, #131826);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
   padding: 22px;
@@ -553,7 +553,7 @@ input, textarea { font-family: inherit; }
   z-index: 300;
   padding: 12px 20px;
   border-radius: 999px;
-  background: rgba(20,24,36,.95);
+  background: rgba(26,31,48,.96);
   backdrop-filter: blur(16px);
   border: 1px solid var(--line-strong);
   font-size: 13px; font-weight: 500;
@@ -589,7 +589,7 @@ input, textarea { font-family: inherit; }
   display: flex; align-items: center; gap: 10px;
   padding: 8px 8px 8px 16px;
   border-radius: 999px;
-  background: rgba(20,24,36,.85);
+  background: rgba(26,31,48,.88);
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
   border: 1px solid var(--line-strong);
@@ -644,7 +644,7 @@ input, textarea { font-family: inherit; }
   background:
     radial-gradient(120% 100% at 0% 0%, rgba(255,46,109,.22), transparent 60%),
     radial-gradient(120% 100% at 100% 100%, rgba(183,148,255,.18), transparent 60%),
-    linear-gradient(180deg, #161a28, #0e111a);
+    linear-gradient(180deg, #1a2035, #131826);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-xl);
   padding: 36px 32px;
@@ -694,7 +694,7 @@ input, textarea { font-family: inherit; }
 .intro__panel {
   position: relative;
   width: min(420px, 100%);
-  background: linear-gradient(180deg, #161a28, #0e111a);
+  background: linear-gradient(180deg, #1a2035, #131826);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-xl);
   padding: 36px 32px;
@@ -726,11 +726,22 @@ input, textarea { font-family: inherit; }
 /* ======================= CUSTOM PIN MARKERS ======================= */
 .pinly-marker {
   position: relative; cursor: pointer;
-  transform: translate(-50%, -100%);
-  transition: transform .2s var(--ease-spring);
+  /* NOTE: do NOT set transform here — MapLibre sets an inline transform
+     on this element to position it at the geographic coordinate.
+     Any CSS transform would be overridden by that inline style, but
+     adding `transition: transform` would cause the marker to animate
+     (lag) every time the map pans or zooms. */
   filter: drop-shadow(0 4px 8px rgba(0,0,0,.5));
+  transition: filter .2s;
 }
-.pinly-marker:hover { transform: translate(-50%, -100%) translateY(-3px) scale(1.1); }
+.pinly-marker:hover { filter: drop-shadow(0 6px 14px rgba(0,0,0,.65)); }
+
+/* Inner wrapper receives hover-lift transform — MapLibre never touches it */
+.pinly-marker__inner {
+  position: relative;
+  transition: transform .2s var(--ease-spring);
+}
+.pinly-marker:hover .pinly-marker__inner { transform: translateY(-3px) scale(1.1); }
 .pinly-marker__pin {
   width: 28px; height: 36px;
   position: relative;
@@ -755,7 +766,7 @@ input, textarea { font-family: inherit; }
   white-space: nowrap;
   padding: 4px 10px;
   border-radius: 10px;
-  background: rgba(20,24,36,.95);
+  background: rgba(26,31,48,.96);
   backdrop-filter: blur(8px);
   border: 1px solid var(--line);
   color: var(--text);
@@ -782,6 +793,10 @@ input, textarea { font-family: inherit; }
   background: linear-gradient(135deg, #ffd166, #ff8c42);
 }
 
+/* Time-decay: older pins look progressively faded */
+.pinly-marker.is-stale { opacity: 0.72; }
+.pinly-marker.is-old   { opacity: 0.45; }
+
 /* Cluster marker */
 .pinly-cluster {
   width: 44px; height: 44px;
@@ -794,10 +809,14 @@ input, textarea { font-family: inherit; }
   border: 3px solid rgba(255,255,255,.95);
   cursor: pointer;
   box-shadow: 0 6px 16px rgba(255,46,109,.4), 0 0 0 4px rgba(255,46,109,.2);
-  transform: translate(-50%, -50%);
-  transition: transform .2s var(--ease-spring);
+  /* No transform here — MapLibre with anchor:'center' handles centering.
+     No transition on transform to prevent zoom-lag. */
+  transition: box-shadow .2s, filter .2s;
 }
-.pinly-cluster:hover { transform: translate(-50%, -50%) scale(1.1); }
+.pinly-cluster:hover {
+  filter: brightness(1.12);
+  box-shadow: 0 8px 24px rgba(255,46,109,.55), 0 0 0 5px rgba(255,46,109,.28);
+}
 .pinly-cluster.is-large {
   width: 56px; height: 56px;
   font-size: 16px;
@@ -810,7 +829,7 @@ input, textarea { font-family: inherit; }
   background: #4ea8ff;
   border: 3px solid #fff;
   box-shadow: 0 0 0 6px rgba(78,168,255,.25), 0 4px 12px rgba(78,168,255,.5);
-  transform: translate(-50%, -50%);
+  /* No transform — MapLibre anchor:'center' handles centering */
   position: relative;
 }
 .pinly-user::before {
