@@ -56,9 +56,10 @@ Pinlyは「街の"今"」に特化した情報共有プラットフォームで�
 
 - **Frontend**: Vite + vanilla ES modules
 - **Map**: MapLibre GL JS（OSS、Mapboxトークン不要）
-- **Storage**: localStorage + BroadcastChannel（クロスタブ同期）
-- **Seed Data**: `public/pins.json`
+- **Storage**: Supabase PostgreSQL（RLS有効、完全無料枠内）
+- **Authentication**: Supabase Anonymous Auth
 - **Hosting**: GitHub Pages（無料・無制限）
+- **Analytics**: Google Analytics GA4
 
 ## 🚀 Local Development
 

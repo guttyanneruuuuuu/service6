@@ -49,6 +49,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Noto+Sans+JP:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 
+  <!-- Google Analytics (GA4) -->
+  <!-- ⚠️ TODO: 以下のGA_MEASUREMENT_IDを、ご自身のGoogle Analyticsを設定した際のMeasurement IDに置き換えてください -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'GA_MEASUREMENT_ID');
+  </script>
+
   <script type="module" crossorigin src="./assets/index-D21-DCvB.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/maplibre-BD93s8Mz.js">
   <link rel="stylesheet" crossorigin href="./assets/index-Crv-GJUa.css">
