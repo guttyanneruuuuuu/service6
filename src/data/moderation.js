@@ -1,125 +1,147 @@
 /**
- * Simple content moderation for Pinly
- * 
- * This module provides basic text analysis to detect potentially harmful content.
- * It uses pattern matching and keyword detection.
+ * Lightweight content moderation for Pinly.
+ *
+ * Goals:
+ *   - Block clearly harmful posts (violence, slurs, explicit personal info).
+ *   - Warn users on borderline content but allow them to confirm.
+ *   - Avoid false-positives on common conversational speech ("お腹すいた" など).
+ *
+ * Fully client-side. Real production should use server-side ML moderation.
  */
 
-// List of prohibited keywords and patterns
-const PROHIBITED_PATTERNS = [
-  // Hate speech and discrimination
-  /差別|偏見|嫌い|クズ|ゴミ|死ね|消えろ|殺す/gi,
-  
-  // Personal attacks
-  /お前|てめえ|バカ|アホ|馬鹿|阿呆/gi,
-  
-  // Spam indicators
-  /\$|¥|€|ビットコイン|仮想通貨|投資|儲ける|稼ぐ/gi,
-  
-  // Explicit content
-  /エロ|ポルノ|18禁|アダルト/gi,
+// Severe (immediate reject)
+const SEVERE_PATTERNS = [
+  /(死ね|殺す|消えろ|殺害|自殺しろ|首吊れ|爆破|テロ)/i,
+  /\b(kill\s+(you|him|her|them))\b/i,
+  /(レイプ|強姦|児童ポルノ|児ポ)/i,
+  /(〇〇さん死|の家|の住所).*(教え|住んで|住所)/i,
 ];
 
-// Keywords that might indicate personal information
+// Warning level (prompt user)
+const WARNING_PATTERNS = [
+  /(クソ|くそ|ふざけ|うざ|きも|きしょ)/i,
+  /(差別|蔑視|ヘイト)/i,
+  /(エロ|ポルノ|18禁|アダルト|セックス)/i,
+  /(投資|仮想通貨|ビットコイン|暗号資産).*(儲|稼|必勝|無料)/i,
+  /(LINE\s*ID|追加してね|DMで|フォロバ100)/i,
+  /(\$|¥|円).{0,8}(送金|振込|稼げ|儲)/i,
+];
+
+// Personal information detection
 const PERSONAL_INFO_PATTERNS = [
-  /\d{3}-\d{4}-\d{4}/, // Phone number
-  /\d{3}-\d{2}-\d{4}/, // SSN-like
-  /[\w\.-]+@[\w\.-]+\.\w+/, // Email
-  /〒\d{3}-\d{4}/, // Postal code
+  /\b\d{2,4}-\d{2,4}-\d{3,4}\b/, // phone-like
+  /\b0[78]0[\s-]?\d{4}[\s-]?\d{4}\b/, // mobile JP
+  /[\w.+-]+@[\w-]+\.[\w.-]+/i, // email
+  /〒?\s*\d{3}-\d{4}/, // postal code
+  /\b\d{16}\b/, // long digit sequences (cc-like)
 ];
 
-/**
- * Analyze text for potentially harmful content
- * Returns a score from 0 (safe) to 1 (harmful)
- */
-export function analyzeText(text) {
-  if (!text || typeof text !== 'string') return 0;
-  
-  let score = 0;
-  
-  // Check for prohibited patterns
-  for (const pattern of PROHIBITED_PATTERNS) {
-    if (pattern.test(text)) {
-      score += 0.3;
-    }
-  }
-  
-  // Check for personal information
-  for (const pattern of PERSONAL_INFO_PATTERNS) {
-    if (pattern.test(text)) {
-      score += 0.2;
-    }
-  }
-  
-  // Check for excessive repetition (spam indicator)
-  const words = text.split(/\s+/);
-  if (words.length > 0) {
-    const uniqueWords = new Set(words);
-    const repetitionRatio = 1 - (uniqueWords.size / words.length);
-    if (repetitionRatio > 0.7) {
-      score += 0.2;
-    }
-  }
-  
-  // Check for excessive punctuation
-  const punctuationCount = (text.match(/[!?！？]/g) || []).length;
-  if (punctuationCount > text.length * 0.2) {
-    score += 0.1;
-  }
-  
-  // Normalize score to 0-1 range
-  return Math.min(score, 1);
+// Spam heuristic helpers
+function isMostlyRepeated(text) {
+  const t = text.replace(/\s+/g, '');
+  if (t.length < 6) return false;
+  // single character repeated >= 60%
+  const counts = {};
+  for (const ch of t) counts[ch] = (counts[ch] || 0) + 1;
+  const max = Math.max(...Object.values(counts));
+  return max / t.length > 0.6;
+}
+
+function looksLikeUrlSpam(text) {
+  const urls = (text.match(/https?:\/\/\S+/gi) || []).length;
+  return urls >= 2 || /bit\.ly|t\.co|tinyurl|goo\.gl/i.test(text);
 }
 
 /**
- * Get moderation verdict
+ * Returns a verdict object.
+ *   - status: 'approved' | 'warning' | 'rejected'
+ *   - reasons: string[] (machine-readable)
+ *   - message: human-friendly reason
  */
 export function getModerationVerdict(text) {
-  const score = analyzeText(text);
-  
-  if (score < 0.3) {
-    return { status: 'approved', score, message: '' };
-  } else if (score < 0.6) {
-    return { 
-      status: 'warning', 
-      score, 
-      message: '⚠️ この投稿は不適切な可能性があります。内容を確認してください。' 
-    };
-  } else {
-    return { 
-      status: 'rejected', 
-      score, 
-      message: '❌ この投稿は不適切なコンテンツを含んでいるため、投稿できません。' 
+  const reasons = [];
+  if (!text || typeof text !== 'string') {
+    return { status: 'rejected', reasons: ['empty'], message: '本文を入力してください。' };
+  }
+  const t = text.trim();
+  if (t.length === 0) return { status: 'rejected', reasons: ['empty'], message: '本文を入力してください。' };
+  if (t.length > 50) return { status: 'rejected', reasons: ['too_long'], message: '50字以内で入力してください。' };
+
+  // Severe -> reject
+  for (const p of SEVERE_PATTERNS) {
+    if (p.test(t)) {
+      return {
+        status: 'rejected',
+        reasons: ['severe'],
+        message: '🚫 暴力的・脅迫的な内容は投稿できません。',
+      };
+    }
+  }
+
+  // Personal info -> reject
+  if (containsPersonalInfo(t)) {
+    return {
+      status: 'rejected',
+      reasons: ['personal_info'],
+      message: '🚫 電話番号・メールアドレス・住所などの個人情報は投稿できません。',
     };
   }
+
+  // URL spam -> reject
+  if (looksLikeUrlSpam(t)) {
+    return {
+      status: 'rejected',
+      reasons: ['url_spam'],
+      message: '🚫 短縮URL や複数のURL を含む投稿はできません。',
+    };
+  }
+
+  // Repeat spam -> reject
+  if (isMostlyRepeated(t)) {
+    return {
+      status: 'rejected',
+      reasons: ['repeat_spam'],
+      message: '🚫 同じ文字の繰り返しは投稿できません。',
+    };
+  }
+
+  // Warning patterns -> warn
+  for (const p of WARNING_PATTERNS) {
+    if (p.test(t)) {
+      reasons.push('warn');
+      return {
+        status: 'warning',
+        reasons,
+        message: '⚠️ 不適切な可能性のある言葉が含まれています。本当に投稿しますか？',
+      };
+    }
+  }
+
+  return { status: 'approved', reasons: [], message: '' };
+}
+
+export function containsPersonalInfo(text) {
+  if (!text) return false;
+  return PERSONAL_INFO_PATTERNS.some((p) => p.test(text));
 }
 
 /**
- * Sanitize text for display
+ * HTML escape. main.js uses this when rendering arbitrary user text.
  */
 export function sanitizeText(text) {
   if (!text || typeof text !== 'string') return '';
-  
-  // Remove potentially harmful HTML/script
   return text
+    .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;');
+    .replace(/'/g, '&#x27;');
 }
 
-/**
- * Check if text contains personal information
- */
-export function containsPersonalInfo(text) {
-  if (!text || typeof text !== 'string') return false;
-  
-  for (const pattern of PERSONAL_INFO_PATTERNS) {
-    if (pattern.test(text)) {
-      return true;
-    }
-  }
-  
-  return false;
+/* Backward-compat exports (kept for potential external use). */
+export function analyzeText(text) {
+  const v = getModerationVerdict(text);
+  if (v.status === 'rejected') return 1;
+  if (v.status === 'warning')  return 0.5;
+  return 0;
 }

@@ -1,166 +1,109 @@
 /**
- * Rate limiting for Pinly
- * 
- * Prevents spam and abuse by limiting the number of posts
- * from the same location or user within a time window.
+ * Rate limiting for Pinly.
+ *
+ * Persisted in localStorage so refreshes don't reset cooldowns.
+ * Only applies to the local user's submissions.
  */
 
-const RATE_LIMIT_STORAGE_KEY = 'pinly.ratelimit.v1';
+const KEY = 'pinly.ratelimit.v2';
 
-// Configuration
-const RATE_LIMITS = {
-  // Same location: max 3 posts per hour
-  sameLocation: {
-    maxPosts: 3,
-    windowSeconds: 3600,
-    radiusMeters: 50,
-  },
-  
-  // Same user: max 10 posts per hour
-  sameUser: {
-    maxPosts: 10,
-    windowSeconds: 3600,
-  },
-  
-  // Global: max 1 post per 30 seconds (prevent rapid-fire)
-  global: {
-    maxPosts: 1,
-    windowSeconds: 30,
-  },
+const RULES = {
+  // 1 post per 10s
+  global:       { max: 1,  windowSec: 10 },
+  // 10 posts / hour per device
+  user:         { max: 10, windowSec: 3600 },
+  // 3 posts / hour within 50m
+  sameLocation: { max: 3,  windowSec: 3600, radiusMeters: 50 },
 };
 
-/**
- * Get rate limit history from localStorage
- */
-function getRateLimitHistory() {
+function load() {
   try {
-    const raw = localStorage.getItem(RATE_LIMIT_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : { posts: [] };
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return { posts: [] };
+    const data = JSON.parse(raw);
+    return data && Array.isArray(data.posts) ? data : { posts: [] };
   } catch {
     return { posts: [] };
   }
 }
 
-/**
- * Save rate limit history to localStorage
- */
-function saveRateLimitHistory(history) {
-  try {
-    localStorage.setItem(RATE_LIMIT_STORAGE_KEY, JSON.stringify(history));
-  } catch {
-    console.warn('Failed to save rate limit history');
-  }
+function save(data) {
+  try { localStorage.setItem(KEY, JSON.stringify(data)); } catch {}
 }
 
-/**
- * Clean up old entries from history
- */
-function cleanupHistory(history, now) {
-  const maxAge = Math.max(
-    RATE_LIMITS.sameLocation.windowSeconds,
-    RATE_LIMITS.sameUser.windowSeconds,
-    RATE_LIMITS.global.windowSeconds
-  );
-  
-  history.posts = history.posts.filter(post => now - post.ts < maxAge);
-  return history;
+function prune(data, now) {
+  const maxAge = Math.max(RULES.global.windowSec, RULES.user.windowSec, RULES.sameLocation.windowSec);
+  data.posts = (data.posts || []).filter((p) => now - p.ts < maxAge);
+  return data;
 }
 
-/**
- * Calculate distance between two coordinates (simplified)
- */
-function getDistance(lat1, lng1, lat2, lng2) {
-  const R = 6371e3; // Earth's radius in meters
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lng2 - lng1) * Math.PI) / 180;
-
-  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) *
-    Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c;
+function distanceMeters(a, b) {
+  const R = 6371000;
+  const φ1 = (a.lat * Math.PI) / 180;
+  const φ2 = (b.lat * Math.PI) / 180;
+  const Δφ = ((b.lat - a.lat) * Math.PI) / 180;
+  const Δλ = ((b.lng - a.lng) * Math.PI) / 180;
+  const x = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(x));
 }
 
-/**
- * Check if user can post
- * Returns { allowed: boolean, reason: string }
- */
+function fmtRetry(sec) {
+  if (sec < 60) return `${sec}秒`;
+  if (sec < 3600) return `${Math.ceil(sec / 60)}分`;
+  return `${Math.ceil(sec / 3600)}時間`;
+}
+
 export function checkRateLimit(lat, lng, userId) {
   const now = Math.floor(Date.now() / 1000);
-  let history = getRateLimitHistory();
-  
-  // Clean up old entries
-  history = cleanupHistory(history, now);
-  
-  // Check global rate limit
-  const recentGlobal = history.posts.filter(
-    p => now - p.ts < RATE_LIMITS.global.windowSeconds
-  );
-  if (recentGlobal.length >= RATE_LIMITS.global.maxPosts) {
+  const data = prune(load(), now);
+
+  // Global cooldown
+  const recentGlobal = data.posts.filter((p) => now - p.ts < RULES.global.windowSec);
+  if (recentGlobal.length >= RULES.global.max) {
+    const wait = RULES.global.windowSec - (now - recentGlobal[recentGlobal.length - 1].ts);
     return {
       allowed: false,
-      reason: '投稿が多すぎます。しばらく待ってから投稿してください。',
-      retryAfter: RATE_LIMITS.global.windowSeconds - (now - recentGlobal[0].ts),
+      reason: `投稿が早すぎます。あと${fmtRetry(Math.max(1, wait))}お待ちください。`,
+      retryAfter: wait,
     };
   }
-  
-  // Check same user rate limit
-  const recentUser = history.posts.filter(
-    p => p.userId === userId && now - p.ts < RATE_LIMITS.sameUser.windowSeconds
-  );
-  if (recentUser.length >= RATE_LIMITS.sameUser.maxPosts) {
+
+  // Per user
+  const recentUser = data.posts.filter((p) => p.userId === userId && now - p.ts < RULES.user.windowSec);
+  if (recentUser.length >= RULES.user.max) {
+    const wait = RULES.user.windowSec - (now - recentUser[0].ts);
     return {
       allowed: false,
-      reason: 'あなたの投稿が多すぎます。しばらく待ってから投稿してください。',
-      retryAfter: RATE_LIMITS.sameUser.windowSeconds - (now - recentUser[0].ts),
+      reason: `1時間あたりの投稿上限(${RULES.user.max}件)に達しました。あと${fmtRetry(Math.max(1, wait))}お待ちください。`,
+      retryAfter: wait,
     };
   }
-  
-  // Check same location rate limit
-  const recentLocation = history.posts.filter(p => {
-    const distance = getDistance(lat, lng, p.lat, p.lng);
-    return distance < RATE_LIMITS.sameLocation.radiusMeters &&
-      now - p.ts < RATE_LIMITS.sameLocation.windowSeconds;
+
+  // Same location
+  const recentLoc = data.posts.filter((p) => {
+    if (now - p.ts >= RULES.sameLocation.windowSec) return false;
+    const d = distanceMeters({ lat, lng }, p);
+    return d < RULES.sameLocation.radiusMeters;
   });
-  if (recentLocation.length >= RATE_LIMITS.sameLocation.maxPosts) {
+  if (recentLoc.length >= RULES.sameLocation.max) {
+    const wait = RULES.sameLocation.windowSec - (now - recentLoc[0].ts);
     return {
       allowed: false,
-      reason: 'この場所への投稿が多すぎます。しばらく待ってから投稿してください。',
-      retryAfter: RATE_LIMITS.sameLocation.windowSeconds - (now - recentLocation[0].ts),
+      reason: `同じ場所への連続投稿が多すぎます。あと${fmtRetry(Math.max(1, wait))}お待ちください。`,
+      retryAfter: wait,
     };
   }
-  
-  // All checks passed
+
   return { allowed: true };
 }
 
-/**
- * Record a post for rate limiting
- */
 export function recordPost(lat, lng, userId) {
   const now = Math.floor(Date.now() / 1000);
-  let history = getRateLimitHistory();
-  
-  history.posts.push({
-    lat,
-    lng,
-    userId,
-    ts: now,
-  });
-  
-  // Clean up old entries
-  history = cleanupHistory(history, now);
-  
-  saveRateLimitHistory(history);
+  const data = prune(load(), now);
+  data.posts.push({ lat, lng, userId, ts: now });
+  save(data);
 }
 
-/**
- * Get remaining time before user can post again (in seconds)
- */
-export function getRemainingWaitTime(lat, lng, userId) {
-  const check = checkRateLimit(lat, lng, userId);
-  return check.retryAfter || 0;
+export function clearRateLimit() {
+  try { localStorage.removeItem(KEY); } catch {}
 }

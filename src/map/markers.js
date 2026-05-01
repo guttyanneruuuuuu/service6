@@ -1,6 +1,13 @@
 import maplibregl from 'maplibre-gl';
 import { getCategory } from '../data/categories.js';
 
+/**
+ * MarkerLayer
+ *
+ * Render pin markers + clusters on the map. Uses MapLibre custom DOM markers
+ * and re-renders on move/zoom. Limits visible markers to those within the
+ * current viewport (with margin) for performance.
+ */
 export class MarkerLayer {
   constructor(map, { onPinClick, onClusterClick }) {
     this.map = map;
@@ -8,39 +15,63 @@ export class MarkerLayer {
     this.onClusterClick = onClusterClick;
     this.markers = new Map();   // id -> maplibregl.Marker
     this.clusters = [];         // array of cluster markers currently displayed
-    this._allPins = [];
     this._activePins = [];
 
-    // Use moveend and zoomend to re-render clusters/markers
-    map.on('moveend', () => this._render());
-    map.on('zoomend', () => this._render());
-  }
-
-  setPins(pins) {
-    this._allPins = pins;
-    this._activePins = pins;
-    this._render();
+    this._renderScheduled = false;
+    const sched = () => this.scheduleRender();
+    map.on('moveend', sched);
+    map.on('zoomend', sched);
   }
 
   setActive(pins) {
     this._activePins = pins;
-    this._render();
+    this.scheduleRender();
   }
 
   addPinAnimated(pin) {
-    if (!this._activePins.find(p => p.id === pin.id)) this._activePins = [pin, ...this._activePins];
-    if (!this._allPins.find(p => p.id === pin.id)) this._allPins = [pin, ...this._allPins];
+    if (!this._activePins.find((p) => p.id === pin.id)) {
+      this._activePins = [pin, ...this._activePins];
+    }
     this._render(pin.id);
   }
 
   updatePin(pin) {
-    const existing = this.markers.get(pin.id);
-    if (!existing) return;
+    const m = this.markers.get(pin.id);
+    if (!m) return;
     const cat = getCategory(pin.cat);
-    const node = existing.getElement();
+    const node = m.getElement();
     node.style.setProperty('--pin-color', cat.color);
     const label = node.querySelector('.pinly-marker__label');
     if (label) label.textContent = pin.text;
+    const emoji = node.querySelector('.pinly-marker__emoji');
+    if (emoji) emoji.textContent = cat.emoji;
+  }
+
+  removePin(id) {
+    const m = this.markers.get(id);
+    if (m) { m.remove(); this.markers.delete(id); }
+  }
+
+  scheduleRender() {
+    if (this._renderScheduled) return;
+    this._renderScheduled = true;
+    requestAnimationFrame(() => {
+      this._renderScheduled = false;
+      this._render();
+    });
+  }
+
+  _withinViewport(pin) {
+    const b = this.map.getBounds();
+    const margin = 0.2;
+    const w = b.getEast() - b.getWest();
+    const h = b.getNorth() - b.getSouth();
+    return (
+      pin.lng >= b.getWest()  - w * margin &&
+      pin.lng <= b.getEast()  + w * margin &&
+      pin.lat >= b.getSouth() - h * margin &&
+      pin.lat <= b.getNorth() + h * margin
+    );
   }
 
   _render(animateNewId = null) {
@@ -48,12 +79,12 @@ export class MarkerLayer {
     const zoom = map.getZoom();
     const cluster = zoom < 13;
 
-    // Clear previous cluster markers
+    // Clear cluster markers
     this.clusters.forEach((m) => m.remove());
     this.clusters = [];
 
     if (cluster) {
-      // Remove all individual markers when clustering
+      // Remove all individual markers in cluster mode
       this.markers.forEach((m) => m.remove());
       this.markers.clear();
 
@@ -74,53 +105,61 @@ export class MarkerLayer {
           const el = document.createElement('div');
           el.className = 'pinly-cluster' + (b.n >= 10 ? ' is-large' : '');
           el.innerHTML = `<span>${b.n > 99 ? '99+' : b.n}</span>`;
+          el.setAttribute('role', 'button');
+          el.setAttribute('aria-label', `${b.n}件のピンが集まっています`);
           el.addEventListener('click', (e) => {
             e.stopPropagation();
             this.onClusterClick && this.onClusterClick({ lat, lng, samples: b.samples });
           });
-          const m = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
+          const m = new maplibregl.Marker({ element: el, anchor: 'center' })
+            .setLngLat([lng, lat])
+            .addTo(map);
           this.clusters.push(m);
         }
       });
-    } else {
-      const desiredIds = new Set(this._activePins.map((p) => p.id));
-      for (const [id, m] of this.markers) {
-        if (!desiredIds.has(id)) {
-          m.remove();
-          this.markers.delete(id);
-        }
+      return;
+    }
+
+    // Individual markers, viewport-culled
+    const visiblePins = this._activePins.filter((p) => this._withinViewport(p));
+    const desiredIds = new Set(visiblePins.map((p) => p.id));
+
+    // Remove off-screen markers
+    for (const [id, m] of this.markers) {
+      if (!desiredIds.has(id)) {
+        m.remove();
+        this.markers.delete(id);
       }
-      for (const p of this._activePins) {
-        if (this.markers.has(p.id)) {
-            // Ensure position is correct even if it was slightly off due to anchor issues
-            this.markers.get(p.id).setLngLat([p.lng, p.lat]);
-            continue;
-        }
-        this._addMarker(p, p.id === animateNewId);
+    }
+
+    // Add / keep visible markers
+    for (const p of visiblePins) {
+      const existing = this.markers.get(p.id);
+      if (existing) {
+        existing.setLngLat([p.lng, p.lat]);
+        continue;
       }
+      this._addMarker(p, p.id === animateNewId);
     }
   }
 
   _addMarker(pin, animate = false) {
     const cat = getCategory(pin.cat);
+    const ageSec  = pin.ts ? (Date.now() / 1000 - pin.ts) : 0;
+    const ageHrs  = ageSec / 3600;
+    const ageClass = ageHrs >= 24 ? ' is-old' : ageHrs >= 6 ? ' is-stale' : '';
+
     const el = document.createElement('div');
-
-    const ageHours = pin.ts ? (Date.now() / 1000 - pin.ts) / 3600 : 0;
-    const ageClass = ageHours >= 24 ? ' is-old' : ageHours >= 6 ? ' is-stale' : '';
-
-    el.className = 'pinly-marker' + (animate ? ' is-new' : '') + (pin.official ? ' is-official' : '') + ageClass;
+    el.className = 'pinly-marker'
+      + (animate ? ' is-new' : '')
+      + (pin.official ? ' is-official' : '')
+      + ageClass;
     el.style.setProperty('--pin-color', cat.color);
-    
-    // Freshness visual boost
-    const ageSec = pin.ts ? (Date.now() / 1000 - pin.ts) : 0;
-    if (ageSec < 3600) {
-      el.style.filter = 'drop-shadow(0 0 8px var(--pin-color))';
-    }
-    el.style.opacity = Math.max(0.5, 1 - (ageSec / (86400 * 7)));
 
     el.innerHTML = `
       <div class="pinly-marker__inner">
         <div class="pinly-marker__pin"></div>
+        <span class="pinly-marker__emoji">${cat.emoji}</span>
         <div class="pinly-marker__label">${escapeHTML(pin.text)}</div>
       </div>
     `;
@@ -128,23 +167,20 @@ export class MarkerLayer {
       e.stopPropagation();
       this.onPinClick && this.onPinClick(pin);
     });
-    
-    // Create marker with 'bottom' anchor
-    const m = new maplibregl.Marker({ 
-        element: el, 
-        anchor: 'bottom',
-        offset: [0, 0] // Ensure no unexpected offset
-    }).setLngLat([pin.lng, pin.lat]).addTo(this.map);
-    
+
+    const m = new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [0, 0] })
+      .setLngLat([pin.lng, pin.lat])
+      .addTo(this.map);
+
     this.markers.set(pin.id, m);
   }
 
   flyTo(pin) {
-    this.map.flyTo({ 
-        center: [pin.lng, pin.lat], 
-        zoom: Math.max(this.map.getZoom(), 15), 
-        speed: 1.4,
-        essential: true 
+    this.map.flyTo({
+      center: [pin.lng, pin.lat],
+      zoom: Math.max(this.map.getZoom(), 15),
+      speed: 1.4,
+      essential: true,
     });
   }
 }

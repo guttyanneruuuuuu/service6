@@ -1,7 +1,9 @@
 import { defineConfig } from 'vite';
 
-export default defineConfig({
-  base: './',
+// GitHub Pages: https://guttyanneruuuuuu.github.io/service6/
+// dev/preview では '/' のままだと相対パス問題が出るため、本番のみ '/service6/' を base にする
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/service6/' : '/',
   server: {
     host: '0.0.0.0',
     port: 5173,
@@ -14,6 +16,8 @@ export default defineConfig({
   build: {
     target: 'es2020',
     outDir: 'dist',
+    sourcemap: false,
+    cssMinify: true,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -22,4 +26,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

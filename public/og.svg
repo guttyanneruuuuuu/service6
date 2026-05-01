@@ -1,47 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <defs>
-    <radialGradient id="bg" cx="80%" cy="20%" r="80%">
-      <stop offset="0%" stop-color="#ff2e6d" stop-opacity="0.35"/>
-      <stop offset="55%" stop-color="#0a0d14" stop-opacity="1"/>
-      <stop offset="100%" stop-color="#0a0d14"/>
-    </radialGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff5fa"/>
+      <stop offset="1" stop-color="#ffe7f3"/>
+    </linearGradient>
     <linearGradient id="pin" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ff5b8a"/>
+      <stop offset="0" stop-color="#ff8fb1"/>
       <stop offset="1" stop-color="#ff2e6d"/>
     </linearGradient>
-    <pattern id="grid" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="14"/>
+      <feOffset dx="0" dy="14" result="o"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.25"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
-  <rect width="1200" height="630" fill="url(#grid)"/>
-
-  <!-- pin clusters scattered like a map -->
-  <g transform="translate(900,160)">
-    <path d="M0 0c-25 0-44 19-44 44 0 31 44 76 44 76s44-45 44-76C44 19 25 0 0 0z" fill="url(#pin)" filter="drop-shadow(0 12px 24px rgba(255,46,109,.5))"/>
-    <circle cx="0" cy="44" r="16" fill="#fff"/>
+  <!-- decorative dots -->
+  <g fill="#ff6b9d" opacity="0.12">
+    <circle cx="120" cy="120" r="42"/>
+    <circle cx="980" cy="510" r="60"/>
+    <circle cx="1080" cy="180" r="28"/>
+    <circle cx="220" cy="500" r="22"/>
   </g>
-  <g transform="translate(770,300)" opacity="0.85">
-    <path d="M0 0c-18 0-32 14-32 32 0 22 32 55 32 55s32-33 32-55C32 14 18 0 0 0z" fill="#7ce7ff"/>
-    <circle cx="0" cy="32" r="11" fill="#0a0d14"/>
+  <!-- big pin -->
+  <g filter="url(#shadow)" transform="translate(150,140)">
+    <path fill="url(#pin)" d="M120 0C53.7 0 0 53.7 0 120c0 88 120 184 120 184s120-96 120-184C240 53.7 186.3 0 120 0z"/>
+    <circle cx="120" cy="115" r="44" fill="#fff"/>
+    <circle cx="120" cy="115" r="20" fill="#ff2e6d"/>
   </g>
-  <g transform="translate(1010,400)" opacity="0.85">
-    <path d="M0 0c-18 0-32 14-32 32 0 22 32 55 32 55s32-33 32-55C32 14 18 0 0 0z" fill="#ff8c42"/>
-    <circle cx="0" cy="32" r="11" fill="#0a0d14"/>
-  </g>
-  <g transform="translate(880,470)" opacity="0.85">
-    <path d="M0 0c-15 0-26 11-26 26 0 18 26 44 26 44s26-26 26-44C26 11 15 0 0 0z" fill="#5dffae"/>
-    <circle cx="0" cy="26" r="9" fill="#0a0d14"/>
-  </g>
-
-  <g font-family="Inter, system-ui, sans-serif">
-    <text x="80" y="270" fill="#f3f5fb" font-size="120" font-weight="800" letter-spacing="-4">街の"今"が、</text>
-    <text x="80" y="395" fill="url(#pin)" font-size="120" font-weight="800" letter-spacing="-4">刺さる。</text>
-    <text x="80" y="465" fill="#b7becf" font-size="28" font-weight="500">匿名 × 50字 × リアルタイム地図SNS</text>
-    <g transform="translate(80,560)">
-      <path d="M0 -30C-10 -30 -18 -22 -18 -12c0 13 18 28 18 28s18-15 18-28C18 -22 10 -30 0 -30z" fill="url(#pin)"/>
-      <circle cx="0" cy="-12" r="6" fill="#fff"/>
-      <text x="32" y="-2" fill="#f3f5fb" font-size="32" font-weight="800" letter-spacing="2">Pinly</text>
+  <!-- text -->
+  <g font-family="'Noto Sans JP','Hiragino Sans','Inter',sans-serif" fill="#4a2c40">
+    <text x="470" y="240" font-size="120" font-weight="900" fill="#ff2e6d" letter-spacing="-4">Pinly</text>
+    <text x="470" y="320" font-size="42" font-weight="800">街の "今" が刺さる地図</text>
+    <text x="470" y="380" font-size="24" font-weight="600" fill="#7d5a71">登録不要 ・ 匿名 ・ 50字 ・ リアルタイム</text>
+    <g transform="translate(470,440)">
+      <rect x="0" y="0" rx="40" ry="40" width="220" height="62" fill="#ff2e6d"/>
+      <text x="110" y="42" font-size="24" font-weight="900" fill="#fff" text-anchor="middle">いますぐ刺す →</text>
     </g>
+    <text x="470" y="552" font-size="20" font-weight="700" fill="#7d5a71">guttyanneruuuuuu.github.io/service6</text>
   </g>
 </svg>

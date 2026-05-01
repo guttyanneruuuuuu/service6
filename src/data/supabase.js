@@ -1,141 +1,129 @@
 /**
- * Supabase integration for Pinly
- * 
- * This module provides persistent data storage for pins using Supabase.
- * It maintains backward compatibility with the local-only store.
+ * Supabase integration for Pinly (optional cloud sync).
+ *
+ * Configuration is read from (in order):
+ *   1. localStorage('pinly.supabase.config') => { url, key }
+ *   2. window.PINLY_SUPABASE = { url, key }
+ *
+ * If neither exists, the module gracefully no-ops and the app falls back
+ * to local-only mode. This means the public deployment works without any
+ * server config, while power-users can plug in their own Supabase project.
  */
 
-// Initialize Supabase client
-// Note: Replace these with your actual Supabase project credentials
-const SUPABASE_URL = '';
-const SUPABASE_ANON_KEY = '';
+const STORAGE_KEY = 'pinly.supabase.config';
 
-// Check if Supabase is available
 let supabaseClient = null;
+let activeChannel = null;
 
-async function initSupabase() {
+function readConfig() {
+  // 1. localStorage override
   try {
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.includes('your-project')) {
-      console.log('Supabase not configured. Using local storage only.');
-      return null;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const cfg = JSON.parse(raw);
+      if (cfg && cfg.url && cfg.key) return cfg;
     }
+  } catch {}
+  // 2. global injection
+  if (typeof window !== 'undefined' && window.PINLY_SUPABASE) {
+    const cfg = window.PINLY_SUPABASE;
+    if (cfg && cfg.url && cfg.key) return cfg;
+  }
+  return null;
+}
 
-    // Dynamically import Supabase client
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
-    
-    supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('Supabase initialized');
+export function setSupabaseConfig({ url, key }) {
+  if (!url || !key) {
+    localStorage.removeItem(STORAGE_KEY);
+    return;
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ url, key }));
+}
+
+export async function initSupabase() {
+  const cfg = readConfig();
+  if (!cfg) {
+    console.info('[Pinly] Supabase not configured — running in local-only mode.');
+    return null;
+  }
+  try {
+    const mod = await import('https://esm.sh/@supabase/supabase-js@2.45.4');
+    supabaseClient = mod.createClient(cfg.url, cfg.key, {
+      realtime: { params: { eventsPerSecond: 10 } },
+    });
+    console.info('[Pinly] Supabase initialized');
     return supabaseClient;
   } catch (err) {
-    console.warn('Supabase initialization failed:', err);
+    console.warn('[Pinly] Supabase init failed:', err);
+    supabaseClient = null;
     return null;
   }
 }
 
-/**
- * Fetch all pins from Supabase
- */
-async function fetchPinsFromSupabase() {
+export function getSupabase() {
+  return supabaseClient;
+}
+
+export async function fetchPinsFromSupabase(limit = 1000) {
   if (!supabaseClient) return [];
-  
   try {
     const { data, error } = await supabaseClient
       .from('pins')
       .select('*')
-      .order('ts', { ascending: false });
-    
+      .order('ts', { ascending: false })
+      .limit(limit);
     if (error) throw error;
     return data || [];
   } catch (err) {
-    console.error('Failed to fetch pins:', err);
+    console.warn('[Pinly] fetch failed:', err);
     return [];
   }
 }
 
-/**
- * Insert a new pin to Supabase
- */
-async function insertPinToSupabase(pin) {
+export async function insertPinToSupabase(pin) {
   if (!supabaseClient) return null;
-  
   try {
-    const { data, error } = await supabaseClient
-      .from('pins')
-      .insert([pin])
-      .select();
-    
+    const { data, error } = await supabaseClient.from('pins').insert([pin]).select();
     if (error) throw error;
     return data?.[0] || null;
   } catch (err) {
-    console.error('Failed to insert pin:', err);
+    console.warn('[Pinly] insert failed:', err);
     return null;
   }
 }
 
-/**
- * Update a pin in Supabase
- */
-async function updatePinInSupabase(id, updates) {
+export async function updatePinInSupabase(id, updates) {
   if (!supabaseClient) return null;
-  
   try {
-    const { data, error } = await supabaseClient
-      .from('pins')
-      .update(updates)
-      .eq('id', id)
-      .select();
-    
+    const { data, error } = await supabaseClient.from('pins').update(updates).eq('id', id).select();
     if (error) throw error;
     return data?.[0] || null;
   } catch (err) {
-    console.error('Failed to update pin:', err);
+    console.warn('[Pinly] update failed:', err);
     return null;
   }
 }
 
-/**
- * Delete a pin from Supabase
- */
-async function deletePinFromSupabase(id) {
+export async function deletePinFromSupabase(id) {
   if (!supabaseClient) return false;
-  
   try {
-    const { error } = await supabaseClient
-      .from('pins')
-      .delete()
-      .eq('id', id);
-    
+    const { error } = await supabaseClient.from('pins').delete().eq('id', id);
     if (error) throw error;
     return true;
   } catch (err) {
-    console.error('Failed to delete pin:', err);
+    console.warn('[Pinly] delete failed:', err);
     return false;
   }
 }
 
-/**
- * Subscribe to real-time pin updates
- */
-function subscribeToSupabasePins(callback) {
+export function subscribeToSupabasePins(callback) {
   if (!supabaseClient) return null;
-  
-  return supabaseClient
-    .channel('pins-changes')
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'pins' },
-      (payload) => {
-        callback(payload);
-      }
-    )
+  if (activeChannel) {
+    try { supabaseClient.removeChannel(activeChannel); } catch {}
+  }
+  activeChannel = supabaseClient
+    .channel('pins-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'pins' }, callback)
     .subscribe();
+  return activeChannel;
 }
-
-export {
-  initSupabase,
-  fetchPinsFromSupabase,
-  insertPinToSupabase,
-  updatePinInSupabase,
-  deletePinFromSupabase,
-  subscribeToSupabasePins,
-};
