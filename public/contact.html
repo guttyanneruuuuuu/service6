@@ -132,13 +132,13 @@
     // 3. 生成されたコードから iframe の src を取得
     // 4. 以下の GOOGLE_FORM_EMBED_URL に貼り付ける
     
-    const GOOGLE_FORM_EMBED_URL = 'PLACEHOLDER_GOOGLE_FORM_URL';
+    const GOOGLE_FORM_EMBED_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSe3r4CUDywfNYmBS3zTDPUvFiIeawYLH67xqqaIUgWYbnKyPQ/viewform?embedded=true';
     
     function loadGoogleForm() {
       const container = document.getElementById('formContainer');
       if (!container) return;
       
-      if (GOOGLE_FORM_EMBED_URL === 'PLACEHOLDER_GOOGLE_FORM_URL') {
+      if (GOOGLE_FORM_EMBED_URL.includes('PLACEHOLDER')) {
         container.innerHTML = `
           <div style="padding: 40px 20px; text-align: center; color: var(--text-dim);">
             <p style="margin-bottom: 16px;">📋 Google フォームはまだ設定されていません</p>
