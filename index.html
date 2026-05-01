@@ -50,13 +50,14 @@
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 
   <!-- Google Analytics (GA4) -->
-  <!-- ⚠️ TODO: 以下のGA_MEASUREMENT_IDを、ご自身のGoogle Analyticsを設定した際のMeasurement IDに置き換えてください -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+  <!-- ⚠️ 重要: 以下のG-XXXXXXXXXXを、ご自身のGoogle Analytics Measurement IDに置き換えてください -->
+  <!-- 設定方法は GOOGLE_ANALYTICS_SETUP.md を参照 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'GA_MEASUREMENT_ID');
+    gtag('config', 'G-XXXXXXXXXX');
   </script>
 
   <script type="module" crossorigin src="./assets/index-D21-DCvB.js"></script>
