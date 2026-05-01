@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Pinly</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <style>
+    :root { --pink:#ff6b9d; --text:#4a2c40; --text-dim:#7d5a71;}
+    body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fdf6ff 0%,#ffe7f3 100%);color:var(--text);font-family:"Noto Sans JP","Inter",system-ui,sans-serif;text-align:center;padding:24px}
+    .pin{width:120px;height:148px;margin:0 auto 24px;background:var(--pink);clip-path:path("M60 0C26.9 0 0 26.9 0 60c0 40 60 88 60 88s60-48 60-88C120 26.9 93.1 0 60 0z");filter:drop-shadow(0 12px 24px rgba(255,107,157,.4));animation:bounce 2s infinite}
+    @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+    h1{font-size:64px;margin:0;color:var(--pink);font-weight:900;letter-spacing:-.04em}
+    p{color:var(--text-dim);font-size:16px;max-width:420px;margin:8px auto 24px}
+    a{display:inline-block;padding:14px 32px;background:var(--pink);color:#fff;border-radius:100px;font-weight:900;text-decoration:none;box-shadow:0 8px 20px rgba(255,107,157,.3)}
+  </style>
+</head>
+<body>
+  <main>
+    <div class="pin"></div>
+    <h1>404</h1>
+    <p>このピンはどこにも刺さっていないようです…<br>探していたページが見つかりませんでした。</p>
+    <a href="./">地図に戻る →</a>
+  </main>
+</body>
+</html>
