@@ -714,8 +714,8 @@ async function submitPin() {
   if (!textEl || !sendBtn) return;
   const text = textEl.value.trim();
 
-  // Moderation
-  const verdict = await getModerationVerdict(text, true);
+  // Moderation (client-side only - no API costs)
+  const verdict = getModerationVerdict(text);
   if (verdict.status === 'rejected') {
     showToast(verdict.message, 'err');
     return;

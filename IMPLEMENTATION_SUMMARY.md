@@ -71,14 +71,14 @@ export async function getModerationVerdict(rawText, useServer = false)
    *   `status: 'warning'` - 警告表示。ユーザーが確認後に投稿可能。
    *   `status: 'rejected'` - 投稿不可。
 
-#### 2.3 投稿フローの更新
-`submitPin()` 関数を非同期化し、サーバーサイドモデレーションを呼び出すようにしました。
+#### 2.3 投稿フローの更新（費用0円化のため修正）
+`submitPin()` 関数を修正し、クライアントサイドのモデレーションのみを使用するようにしました。これにより、OpenAI API などの有料サービスを使用せず、完全に無料で運営できます。
 
 ```javascript
-const verdict = await getModerationVerdict(text, true);
+const verdict = getModerationVerdict(text);
 ```
 
-**セキュリティ効果**: クライアント側のフィルタリングだけでは回避可能な問題を、サーバー側のAI判定で補完します。
+**セキュリティ効果**: クライアント側のフィルタリング（キーワード検知、個人情報検出、スパム判定）により、一般的な荒らしやスパムに対応します。
 
 ---
 
