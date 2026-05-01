@@ -9,13 +9,13 @@
  *
  * Pin schema:
  *   {
- *     id:       string
- *     lat,lng:  number
- *     cat:      string
- *     text:     string  (<=50)
+ *     id:       string  (matches /^[a-z0-9_-]{1,64}$/)
+ *     lat,lng:  number  (validated to be finite & within world bounds)
+ *     cat:      string  (one of CATEGORIES ids)
+ *     text:     string  (<=50, control chars stripped)
  *     ts:       number  (unix seconds)
- *     loc:      string
- *     author:   string
+ *     loc:      string  (<=80)
+ *     author:   string  (<=64)
  *     reactions: { emoji: count }
  *     myReactions: string[]
  *     official: boolean
@@ -40,6 +40,35 @@ const SEED_FLAG = 'pinly.seed.v3';
 const BC_NAME   = 'pinly.bc.v1';
 
 const EXPIRE_SEC = 48 * 3600; // 48 hours
+const MAX_PINS   = 5000;       // hard cap to bound memory/storage
+const ID_RE      = /^[a-zA-Z0-9_-]{1,64}$/;
+
+// Strip control characters and limit length.
+function safeStr(v, max = 50) {
+  if (v == null) return '';
+  let s = String(v);
+  // strip control chars but keep spaces / newlines
+  s = s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u2028\u2029]/g, '');
+  if (s.length > max) s = s.slice(0, max);
+  return s;
+}
+
+function safeId(v, prefix = 'p_') {
+  const s = String(v ?? '');
+  if (ID_RE.test(s)) return s;
+  return prefix + (crypto.randomUUID
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2, 14));
+}
+
+function safeNum(v, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function clamp(n, lo, hi) {
+  return Math.max(lo, Math.min(hi, n));
+}
 
 export class PinStore extends EventTarget {
   constructor() {
@@ -58,20 +87,23 @@ export class PinStore extends EventTarget {
     this._loadLS().forEach((p) => this.pins.set(p.id, p));
 
     // 2. Try Supabase (async, non-blocking)
-    this.supabase = await initSupabase();
+    try {
+      this.supabase = await initSupabase();
+    } catch {
+      this.supabase = null;
+    }
     if (this.supabase) {
       try {
         const remote = await fetchPinsFromSupabase();
         remote.forEach((p) => {
           const norm = this._normalize(p);
-          // remote wins over local for same id
-          this.pins.set(norm.id, norm);
+          if (norm) this.pins.set(norm.id, norm);
         });
         this.supabaseSubscription = subscribeToSupabasePins((payload) => {
           this._onSupabaseChange(payload);
         });
       } catch (err) {
-        console.warn('[Pinly] supabase sync failed:', err);
+        console.warn('[Pinly] supabase sync failed:', err?.message || err);
       }
     }
 
@@ -86,10 +118,9 @@ export class PinStore extends EventTarget {
           if (data && Array.isArray(data.pins)) {
             const now = Math.floor(Date.now() / 1000);
             data.pins.forEach((p) => {
-              // Use offsetSec for "minutes/hours ago" relative to load
               const ts = (typeof p.offsetSec === 'number') ? (now - p.offsetSec) : (p.ts || now);
               const merged = this._normalize({ ...p, ts });
-              if (!this.pins.has(merged.id)) {
+              if (merged && !this.pins.has(merged.id)) {
                 this.pins.set(merged.id, merged);
               }
             });
@@ -97,15 +128,15 @@ export class PinStore extends EventTarget {
             this._saveLS();
           }
         }
-      } catch (err) {
+      } catch {
         // Offline / file missing — okay, just no seed.
       }
     }
 
-    // 4. Refresh seed timestamps each load (always show "fresh" examples)
-    //    This only updates official seed pins so user-created pins keep their time.
+    // 4. Refresh seed timestamps each load
     this._refreshSeedTimestamps();
 
+    this._enforceCap();
     this._emit('ready', { count: this.pins.size });
   }
 
@@ -119,7 +150,8 @@ export class PinStore extends EventTarget {
       const now = Math.floor(Date.now() / 1000);
       let updated = false;
       data.pins.forEach((seed) => {
-        const existing = this.pins.get(seed.id);
+        const id = safeId(seed.id);
+        const existing = this.pins.get(id);
         if (existing && existing.author === 'PinlyOfficial' && typeof seed.offsetSec === 'number') {
           const newTs = now - seed.offsetSec;
           if (Math.abs(newTs - existing.ts) > 60) {
@@ -139,13 +171,13 @@ export class PinStore extends EventTarget {
   _loadSelf() {
     try {
       const s = JSON.parse(localStorage.getItem(LS_SELF) || '{}');
-      if (s && s.id) return s;
+      if (s && typeof s.id === 'string' && /^u_[a-z0-9_-]{4,32}$/i.test(s.id)) return s;
     } catch {}
     const id = 'u_' + (crypto.randomUUID
       ? crypto.randomUUID().slice(0, 8)
       : Math.random().toString(36).slice(2, 10));
     const fresh = { id, joinedAt: Date.now() };
-    localStorage.setItem(LS_SELF, JSON.stringify(fresh));
+    try { localStorage.setItem(LS_SELF, JSON.stringify(fresh)); } catch {}
     return fresh;
   }
 
@@ -155,56 +187,121 @@ export class PinStore extends EventTarget {
       const raw = localStorage.getItem(LS_KEY);
       if (!raw) return [];
       const arr = JSON.parse(raw);
-      return Array.isArray(arr) ? arr.map((p) => this._normalize(p)) : [];
+      if (!Array.isArray(arr)) return [];
+      const out = [];
+      for (const p of arr) {
+        const n = this._normalize(p);
+        if (n) out.push(n);
+      }
+      return out;
     } catch { return []; }
   }
+
   _saveLS() {
     try {
       const arr = Array.from(this.pins.values());
-      localStorage.setItem(LS_KEY, JSON.stringify(arr));
-    } catch {}
+      // bound size: keep newest MAX_PINS (already enforced, but safe-guard)
+      const trimmed = arr.length > MAX_PINS ? arr.slice(-MAX_PINS) : arr;
+      localStorage.setItem(LS_KEY, JSON.stringify(trimmed));
+    } catch {
+      // Quota exceeded — try shrinking by half and retry once.
+      try {
+        const half = Array.from(this.pins.values()).slice(-Math.floor(MAX_PINS / 2));
+        localStorage.setItem(LS_KEY, JSON.stringify(half));
+      } catch {}
+    }
   }
 
+  /** Validate & normalize an incoming pin. Returns null if invalid. */
   _normalize(p) {
+    if (!p || typeof p !== 'object') return null;
+
+    const lat = safeNum(p.lat, NaN);
+    const lng = safeNum(p.lng, NaN);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+
+    const id = safeId(p.id);
+    const cat = typeof p.cat === 'string' ? p.cat.replace(/[^a-z]/gi, '').slice(0, 12).toLowerCase() : 'misc';
+    const text = safeStr(p.text, 50);
+    const loc  = safeStr(p.loc, 80);
+    const author = safeStr(p.author || 'anon', 64);
+    const ts = clamp(safeNum(p.ts, Math.floor(Date.now() / 1000)), 0, 1e12);
+
+    // Sanitize reactions: only allow short emoji-like keys, integer values 0..1e6
+    let reactions = {};
+    if (p.reactions && typeof p.reactions === 'object') {
+      let count = 0;
+      for (const [k, v] of Object.entries(p.reactions)) {
+        if (count++ > 24) break;
+        if (typeof k !== 'string' || k.length === 0 || k.length > 8) continue;
+        const num = Math.floor(safeNum(v, 0));
+        if (num <= 0 || num > 1e6) continue;
+        reactions[k] = num;
+      }
+    }
+
+    let myReactions = [];
+    if (Array.isArray(p.myReactions)) {
+      myReactions = p.myReactions
+        .filter((e) => typeof e === 'string' && e.length > 0 && e.length <= 8)
+        .slice(0, 24);
+    }
+
     return {
-      id: p.id || ('p_' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2))),
-      lat: +p.lat,
-      lng: +p.lng,
-      cat: p.cat || 'misc',
-      text: String(p.text || '').slice(0, 50),
-      ts: +p.ts || Math.floor(Date.now() / 1000),
-      loc: p.loc || '',
-      author: p.author || 'anon',
-      reactions: (p.reactions && typeof p.reactions === 'object') ? { ...p.reactions } : {},
-      myReactions: Array.isArray(p.myReactions) ? [...p.myReactions] : [],
+      id,
+      lat, lng,
+      cat: cat || 'misc',
+      text,
+      ts,
+      loc,
+      author,
+      reactions,
+      myReactions,
       official: !!p.official,
       _reported: !!p._reported,
-      _reportCount: +p._reportCount || 0,
+      _reportCount: clamp(Math.floor(safeNum(p._reportCount, 0)), 0, 1e6),
       _hidden: !!p._hidden,
     };
   }
 
-  /* ==================== public API ==================== */
-  list() {
-    return Array.from(this.pins.values());
+  _enforceCap() {
+    if (this.pins.size <= MAX_PINS) return;
+    // Drop oldest (smallest ts) until under cap
+    const arr = Array.from(this.pins.values()).sort((a, b) => a.ts - b.ts);
+    const toRemove = arr.length - MAX_PINS;
+    for (let i = 0; i < toRemove; i++) {
+      this.pins.delete(arr[i].id);
+    }
   }
 
-  get(id) { return this.pins.get(id); }
+  /* ==================== public API ==================== */
+  list() { return Array.from(this.pins.values()); }
+
+  get(id) {
+    if (typeof id !== 'string' || !ID_RE.test(id)) return undefined;
+    return this.pins.get(id);
+  }
 
   add({ lat, lng, cat, text, loc }) {
     const pin = this._normalize({
-      id: 'p_' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 12)),
+      id: 'p_' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 14)),
       lat, lng, cat, text, loc,
       ts: Math.floor(Date.now() / 1000),
       author: this.self.id,
       reactions: {},
       myReactions: [],
     });
+    if (!pin) throw new Error('invalid pin');
+
     this.pins.set(pin.id, pin);
+    this._enforceCap();
     this._saveLS();
 
     if (this.supabase) {
-      insertPinToSupabase(pin).catch(() => {});
+      // strip the leading underscore-prefixed local fields before sending
+      const { _reported, _reportCount, _hidden, myReactions, ...remote } = pin;
+      insertPinToSupabase(remote).catch(() => {});
     }
 
     this._emit('add', pin);
@@ -213,14 +310,18 @@ export class PinStore extends EventTarget {
   }
 
   react(id, emoji) {
-    const p = this.pins.get(id);
+    const p = this.get(id);
     if (!p) return null;
+    if (typeof emoji !== 'string' || emoji.length === 0 || emoji.length > 8) return null;
+
     const idx = p.myReactions.indexOf(emoji);
     if (idx >= 0) {
       p.myReactions.splice(idx, 1);
       p.reactions[emoji] = Math.max(0, (p.reactions[emoji] || 1) - 1);
       if (p.reactions[emoji] === 0) delete p.reactions[emoji];
     } else {
+      // Cap distinct reactions per pin.
+      if (Object.keys(p.reactions).length >= 24 && !p.reactions[emoji]) return null;
       p.myReactions.push(emoji);
       p.reactions[emoji] = (p.reactions[emoji] || 0) + 1;
     }
@@ -235,8 +336,8 @@ export class PinStore extends EventTarget {
   }
 
   report(id) {
-    const p = this.pins.get(id);
-    if (!p) return;
+    const p = this.get(id);
+    if (!p) return false;
     p._reported = true;
     p._reportCount = (p._reportCount || 0) + 1;
     this._saveLS();
@@ -244,11 +345,12 @@ export class PinStore extends EventTarget {
       updatePinInSupabase(id, { _reported: true, _reportCount: p._reportCount }).catch(() => {});
     }
     this._emit('update', p);
+    return true;
   }
 
   /** Remove a pin you own locally. */
   removeOwn(id) {
-    const p = this.pins.get(id);
+    const p = this.get(id);
     if (!p) return false;
     if (p.author !== this.self.id) return false;
     this.pins.delete(id);
@@ -282,12 +384,12 @@ export class PinStore extends EventTarget {
         return { p, score };
       })
       .sort((a, b) => b.score - a.score)
-      .slice(0, limit)
+      .slice(0, Math.max(0, limit | 0))
       .map((x) => x.p);
   }
 
   newest(limit = 25) {
-    return this._visible().sort((a, b) => b.ts - a.ts).slice(0, limit);
+    return this._visible().sort((a, b) => b.ts - a.ts).slice(0, Math.max(0, limit | 0));
   }
 
   myPins() {
@@ -297,9 +399,10 @@ export class PinStore extends EventTarget {
   }
 
   filter({ cat = 'all', q = '' } = {}) {
-    const ql = (q || '').trim().toLowerCase();
+    const ql = String(q || '').trim().toLowerCase();
+    const safeCat = String(cat || 'all').replace(/[^a-z]/gi, '').toLowerCase() || 'all';
     return this._visible().filter((p) => {
-      if (cat !== 'all' && p.cat !== cat) return false;
+      if (safeCat !== 'all' && p.cat !== safeCat) return false;
       if (!ql) return true;
       return (
         p.text.toLowerCase().includes(ql) ||
@@ -308,7 +411,6 @@ export class PinStore extends EventTarget {
     });
   }
 
-  /** Visible to everyone (not reported, not expired, not hidden). */
   _visible() {
     const now = Math.floor(Date.now() / 1000);
     return this.list().filter((p) => {
@@ -318,7 +420,6 @@ export class PinStore extends EventTarget {
     });
   }
 
-  /** Total counts (visible + own). */
   totals() {
     const now = Math.floor(Date.now() / 1000);
     let visible = 0, mine = 0;
@@ -339,17 +440,19 @@ export class PinStore extends EventTarget {
     if (!msg || typeof msg !== 'object') return;
     if (msg.t === 'add' && msg.pin) {
       const p = this._normalize(msg.pin);
-      if (!this.pins.has(p.id)) {
+      if (p && !this.pins.has(p.id)) {
         this.pins.set(p.id, p);
+        this._enforceCap();
         this._saveLS();
         this._emit('add', p);
       }
     } else if (msg.t === 'update' && msg.pin) {
       const p = this._normalize(msg.pin);
+      if (!p) return;
       this.pins.set(p.id, p);
       this._saveLS();
       this._emit('update', p);
-    } else if (msg.t === 'delete' && msg.id) {
+    } else if (msg.t === 'delete' && typeof msg.id === 'string' && ID_RE.test(msg.id)) {
       const p = this.pins.get(msg.id);
       if (p) {
         this.pins.delete(msg.id);
@@ -365,10 +468,12 @@ export class PinStore extends EventTarget {
     if (eventType === 'INSERT' || eventType === 'UPDATE') {
       if (!n) return;
       const p = this._normalize(n);
+      if (!p) return;
       this.pins.set(p.id, p);
+      this._enforceCap();
       this._saveLS();
       this._emit(eventType === 'INSERT' ? 'add' : 'update', p);
-    } else if (eventType === 'DELETE' && o) {
+    } else if (eventType === 'DELETE' && o && typeof o.id === 'string' && ID_RE.test(o.id)) {
       this.pins.delete(o.id);
       this._saveLS();
       this._emit('delete', o);

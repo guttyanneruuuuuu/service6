@@ -3,55 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <meta name="theme-color" content="#ff6b9d">
+  <meta name="theme-color" content="#ff1f6d" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14101e" media="(prefers-color-scheme: dark)">
   <meta name="color-scheme" content="light dark">
 
-  <title>Pinly — 街の &quot;今&quot; が刺さる地図</title>
-  <meta name="description" content="登録不要・完全匿名・50字制限の地図SNS。街のいまをピン留めしてシェアしよう。">
-  <meta name="keywords" content="Pinly,地図,SNS,匿名,リアルタイム,ピン,街,今,投稿">
+  <!-- Security headers (meta-form) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://esm.sh; connect-src 'self' https://*.basemaps.cartocdn.com https://*.supabase.co wss://*.supabase.co https://esm.sh; worker-src 'self' blob:; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(self), microphone=(), camera=(), interest-cohort=()">
+
+  <title>Pinly — 街の &quot;今&quot; が刺さる地図 📍</title>
+  <meta name="description" content="登録不要・完全匿名・50字制限の地図SNS。街のいまをピン留めしてシェアしよう。リアルタイムに浮かぶ&quot;街の声&quot;を地図で発見できます。">
+  <meta name="keywords" content="Pinly,地図,SNS,匿名,リアルタイム,ピン,街,今,投稿,グルメ,穴場">
   <meta name="author" content="Pinly Team">
+  <meta name="robots" content="index, follow">
 
   <!-- OGP -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Pinly — 街の &quot;今&quot; が刺さる地図">
-  <meta property="og:description" content="登録不要・完全匿名・50字。街のいまをピン留めしてシェアできる地図SNS。">
-  <meta property="og:image" content="./og.svg">
+  <meta property="og:description" content="登録不要・匿名・50字。街のいまをピン留めしてシェアできる地図SNS。">
+  <meta property="og:image" content="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAwIDYzMCIgd2lkdGg9IjEyMDAiIGhlaWdodD0iNjMwIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmZmNWZhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2ZmZTdmMyIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0icGluIiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2ZmOGZiMSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmZjJlNmQiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8ZmlsdGVyIGlkPSJzaGFkb3ciIHg9Ii0yMCUiIHk9Ii0yMCUiIHdpZHRoPSIxNDAlIiBoZWlnaHQ9IjE0MCUiPgogICAgICA8ZmVHYXVzc2lhbkJsdXIgaW49IlNvdXJjZUFscGhhIiBzdGREZXZpYXRpb249IjE0Ii8+CiAgICAgIDxmZU9mZnNldCBkeD0iMCIgZHk9IjE0IiByZXN1bHQ9Im8iLz4KICAgICAgPGZlQ29tcG9uZW50VHJhbnNmZXI+PGZlRnVuY0EgdHlwZT0ibGluZWFyIiBzbG9wZT0iMC4yNSIvPjwvZmVDb21wb25lbnRUcmFuc2Zlcj4KICAgICAgPGZlTWVyZ2U+PGZlTWVyZ2VOb2RlLz48ZmVNZXJnZU5vZGUgaW49IlNvdXJjZUdyYXBoaWMiLz48L2ZlTWVyZ2U+CiAgICA8L2ZpbHRlcj4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iNjMwIiBmaWxsPSJ1cmwoI2JnKSIvPgogIDwhLS0gZGVjb3JhdGl2ZSBkb3RzIC0tPgogIDxnIGZpbGw9IiNmZjZiOWQiIG9wYWNpdHk9IjAuMTIiPgogICAgPGNpcmNsZSBjeD0iMTIwIiBjeT0iMTIwIiByPSI0MiIvPgogICAgPGNpcmNsZSBjeD0iOTgwIiBjeT0iNTEwIiByPSI2MCIvPgogICAgPGNpcmNsZSBjeD0iMTA4MCIgY3k9IjE4MCIgcj0iMjgiLz4KICAgIDxjaXJjbGUgY3g9IjIyMCIgY3k9IjUwMCIgcj0iMjIiLz4KICA8L2c+CiAgPCEtLSBiaWcgcGluIC0tPgogIDxnIGZpbHRlcj0idXJsKCNzaGFkb3cpIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNTAsMTQwKSI+CiAgICA8cGF0aCBmaWxsPSJ1cmwoI3BpbikiIGQ9Ik0xMjAgMEM1My43IDAgMCA1My43IDAgMTIwYzAgODggMTIwIDE4NCAxMjAgMTg0czEyMC05NiAxMjAtMTg0QzI0MCA1My43IDE4Ni4zIDAgMTIwIDB6Ii8+CiAgICA8Y2lyY2xlIGN4PSIxMjAiIGN5PSIxMTUiIHI9IjQ0IiBmaWxsPSIjZmZmIi8+CiAgICA8Y2lyY2xlIGN4PSIxMjAiIGN5PSIxMTUiIHI9IjIwIiBmaWxsPSIjZmYyZTZkIi8+CiAgPC9nPgogIDwhLS0gdGV4dCAtLT4KICA8ZyBmb250LWZhbWlseT0iJ05vdG8gU2FucyBKUCcsJ0hpcmFnaW5vIFNhbnMnLCdJbnRlcicsc2Fucy1zZXJpZiIgZmlsbD0iIzRhMmM0MCI+CiAgICA8dGV4dCB4PSI0NzAiIHk9IjI0MCIgZm9udC1zaXplPSIxMjAiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiNmZjJlNmQiIGxldHRlci1zcGFjaW5nPSItNCI+UGlubHk8L3RleHQ+CiAgICA8dGV4dCB4PSI0NzAiIHk9IjMyMCIgZm9udC1zaXplPSI0MiIgZm9udC13ZWlnaHQ9IjgwMCI+6KGX44GuICLku4oiIOOBjOWIuuOBleOCi+WcsOWbszwvdGV4dD4KICAgIDx0ZXh0IHg9IjQ3MCIgeT0iMzgwIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iNjAwIiBmaWxsPSIjN2Q1YTcxIj7nmbvpjLLkuI3opoEg44O7IOWMv+WQjSDjg7sgNTDlrZcg44O7IOODquOCouODq+OCv+OCpOODoDwvdGV4dD4KICAgIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQ3MCw0NDApIj4KICAgICAgPHJlY3QgeD0iMCIgeT0iMCIgcng9IjQwIiByeT0iNDAiIHdpZHRoPSIyMjAiIGhlaWdodD0iNjIiIGZpbGw9IiNmZjJlNmQiLz4KICAgICAgPHRleHQgeD0iMTEwIiB5PSI0MiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9IjkwMCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+44GE44G+44GZ44GQ5Yi644GZIOKGkjwvdGV4dD4KICAgIDwvZz4KICAgIDx0ZXh0IHg9IjQ3MCIgeT0iNTUyIiBmb250LXNpemU9IjIwIiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjN2Q1YTcxIj5ndXR0eWFubmVydXV1dXV1LmdpdGh1Yi5pby9zZXJ2aWNlNjwvdGV4dD4KICA8L2c+Cjwvc3ZnPgo=">
   <meta property="og:url" content="https://guttyanneruuuuuu.github.io/service6/">
   <meta property="og:site_name" content="Pinly">
   <meta property="og:locale" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Pinly — 街の &quot;今&quot; が刺さる地図">
-  <meta name="twitter:description" content="登録不要・完全匿名・50字。街のいまをピン留めしてシェアできる地図SNS。">
-  <meta name="twitter:image" content="./og.svg">
+  <meta name="twitter:description" content="登録不要・匿名・50字。街のいまをピン留めしてシェアできる地図SNS。">
+  <meta name="twitter:image" content="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAwIDYzMCIgd2lkdGg9IjEyMDAiIGhlaWdodD0iNjMwIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmZmNWZhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2ZmZTdmMyIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0icGluIiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2ZmOGZiMSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmZjJlNmQiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8ZmlsdGVyIGlkPSJzaGFkb3ciIHg9Ii0yMCUiIHk9Ii0yMCUiIHdpZHRoPSIxNDAlIiBoZWlnaHQ9IjE0MCUiPgogICAgICA8ZmVHYXVzc2lhbkJsdXIgaW49IlNvdXJjZUFscGhhIiBzdGREZXZpYXRpb249IjE0Ii8+CiAgICAgIDxmZU9mZnNldCBkeD0iMCIgZHk9IjE0IiByZXN1bHQ9Im8iLz4KICAgICAgPGZlQ29tcG9uZW50VHJhbnNmZXI+PGZlRnVuY0EgdHlwZT0ibGluZWFyIiBzbG9wZT0iMC4yNSIvPjwvZmVDb21wb25lbnRUcmFuc2Zlcj4KICAgICAgPGZlTWVyZ2U+PGZlTWVyZ2VOb2RlLz48ZmVNZXJnZU5vZGUgaW49IlNvdXJjZUdyYXBoaWMiLz48L2ZlTWVyZ2U+CiAgICA8L2ZpbHRlcj4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iNjMwIiBmaWxsPSJ1cmwoI2JnKSIvPgogIDwhLS0gZGVjb3JhdGl2ZSBkb3RzIC0tPgogIDxnIGZpbGw9IiNmZjZiOWQiIG9wYWNpdHk9IjAuMTIiPgogICAgPGNpcmNsZSBjeD0iMTIwIiBjeT0iMTIwIiByPSI0MiIvPgogICAgPGNpcmNsZSBjeD0iOTgwIiBjeT0iNTEwIiByPSI2MCIvPgogICAgPGNpcmNsZSBjeD0iMTA4MCIgY3k9IjE4MCIgcj0iMjgiLz4KICAgIDxjaXJjbGUgY3g9IjIyMCIgY3k9IjUwMCIgcj0iMjIiLz4KICA8L2c+CiAgPCEtLSBiaWcgcGluIC0tPgogIDxnIGZpbHRlcj0idXJsKCNzaGFkb3cpIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNTAsMTQwKSI+CiAgICA8cGF0aCBmaWxsPSJ1cmwoI3BpbikiIGQ9Ik0xMjAgMEM1My43IDAgMCA1My43IDAgMTIwYzAgODggMTIwIDE4NCAxMjAgMTg0czEyMC05NiAxMjAtMTg0QzI0MCA1My43IDE4Ni4zIDAgMTIwIDB6Ii8+CiAgICA8Y2lyY2xlIGN4PSIxMjAiIGN5PSIxMTUiIHI9IjQ0IiBmaWxsPSIjZmZmIi8+CiAgICA8Y2lyY2xlIGN4PSIxMjAiIGN5PSIxMTUiIHI9IjIwIiBmaWxsPSIjZmYyZTZkIi8+CiAgPC9nPgogIDwhLS0gdGV4dCAtLT4KICA8ZyBmb250LWZhbWlseT0iJ05vdG8gU2FucyBKUCcsJ0hpcmFnaW5vIFNhbnMnLCdJbnRlcicsc2Fucy1zZXJpZiIgZmlsbD0iIzRhMmM0MCI+CiAgICA8dGV4dCB4PSI0NzAiIHk9IjI0MCIgZm9udC1zaXplPSIxMjAiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiNmZjJlNmQiIGxldHRlci1zcGFjaW5nPSItNCI+UGlubHk8L3RleHQ+CiAgICA8dGV4dCB4PSI0NzAiIHk9IjMyMCIgZm9udC1zaXplPSI0MiIgZm9udC13ZWlnaHQ9IjgwMCI+6KGX44GuICLku4oiIOOBjOWIuuOBleOCi+WcsOWbszwvdGV4dD4KICAgIDx0ZXh0IHg9IjQ3MCIgeT0iMzgwIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iNjAwIiBmaWxsPSIjN2Q1YTcxIj7nmbvpjLLkuI3opoEg44O7IOWMv+WQjSDjg7sgNTDlrZcg44O7IOODquOCouODq+OCv+OCpOODoDwvdGV4dD4KICAgIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQ3MCw0NDApIj4KICAgICAgPHJlY3QgeD0iMCIgeT0iMCIgcng9IjQwIiByeT0iNDAiIHdpZHRoPSIyMjAiIGhlaWdodD0iNjIiIGZpbGw9IiNmZjJlNmQiLz4KICAgICAgPHRleHQgeD0iMTEwIiB5PSI0MiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9IjkwMCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+44GE44G+44GZ44GQ5Yi644GZIOKGkjwvdGV4dD4KICAgIDwvZz4KICAgIDx0ZXh0IHg9IjQ3MCIgeT0iNTUyIiBmb250LXNpemU9IjIwIiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjN2Q1YTcxIj5ndXR0eWFubmVydXV1dXV1LmdpdGh1Yi5pby9zZXJ2aWNlNjwvdGV4dD4KICA8L2c+Cjwvc3ZnPgo=">
 
   <!-- Icons & PWA -->
-  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-  <link rel="apple-touch-icon" href="./favicon.svg">
-  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/service6/assets/favicon-DZ1LYcSv.svg">
+  <link rel="apple-touch-icon" href="/service6/assets/favicon-DZ1LYcSv.svg">
+  <link rel="manifest" href="/service6/assets/manifest-dLpz96_T.webmanifest">
+  <link rel="canonical" href="https://guttyanneruuuuuu.github.io/service6/">
 
   <!-- Preconnect -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://a.basemaps.cartocdn.com">
   <link rel="preconnect" href="https://b.basemaps.cartocdn.com">
-  <link rel="preconnect" href="https://c.basemaps.cartocdn.com">
-  <link rel="preconnect" href="https://d.basemaps.cartocdn.com">
+  <link rel="dns-prefetch" href="https://c.basemaps.cartocdn.com">
+  <link rel="dns-prefetch" href="https://d.basemaps.cartocdn.com">
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Noto+Sans+JP:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
-  <script type="module" crossorigin src="/service6/assets/index-H919NJJx.js"></script>
-  <link rel="modulepreload" crossorigin href="/service6/assets/maplibre-x67qOzbu.js">
-  <link rel="stylesheet" crossorigin href="/service6/assets/index-Y0enAj6D.css">
+
+  <script type="module" crossorigin src="/service6/assets/index-_AeSwY_i.js"></script>
+  <link rel="modulepreload" crossorigin href="/service6/assets/maplibre-BD93s8Mz.js">
+  <link rel="stylesheet" crossorigin href="/service6/assets/index-B4zxTMhM.css">
 </head>
 <body>
 
-  <!-- Boot -->
+  <!-- Boot screen -->
   <div id="boot" class="boot" role="status" aria-live="polite" aria-label="読み込み中">
     <div class="boot__logo" aria-hidden="true"></div>
     <div class="boot__text">街の声を集めています…</div>
   </div>
 
-  <!-- Map -->
+  <!-- Map canvas -->
   <div id="map" class="map" role="application" aria-label="ピン地図"></div>
 
   <!-- App Bar -->
@@ -62,13 +72,13 @@
     </button>
     <div class="appbar__search" role="search">
       <span class="appbar__search-icon" aria-hidden="true">🔎</span>
-      <input type="text" id="searchInput" placeholder="ピンを検索…" aria-label="ピンを検索" autocomplete="off">
+      <input type="text" id="searchInput" placeholder="ピンを検索…" aria-label="ピンを検索" autocomplete="off" maxlength="80" inputmode="search">
       <button id="searchClear" class="appbar__search-clear" hidden aria-label="検索をクリア">×</button>
     </div>
     <div class="appbar__actions">
       <button id="themeBtn" class="iconbtn" title="テーマ切替" aria-label="ライト/ダークテーマ切替">🌗</button>
       <button id="locateBtn" class="iconbtn" title="現在地" aria-label="現在地に移動">📍</button>
-      <button id="menuBtn" class="iconbtn" title="メニュー" aria-label="メニューを開く">≡</button>
+      <button id="menuBtn" class="iconbtn" title="メニュー" aria-label="メニューを開く" aria-haspopup="dialog">≡</button>
     </div>
   </header>
 
@@ -89,7 +99,7 @@
   </button>
 
   <!-- Trend Panel -->
-  <aside id="trendPanel" class="side-panel side-panel--left" aria-label="トレンドピン">
+  <aside id="trendPanel" class="side-panel side-panel--left" aria-label="トレンドピン" aria-hidden="true">
     <div class="side-panel__header">
       <span class="side-panel__title">🔥 今、話題のピン</span>
       <button class="side-panel__close" data-close-panel="trendPanel" aria-label="閉じる">×</button>
@@ -98,7 +108,7 @@
   </aside>
 
   <!-- Ranking Panel -->
-  <aside id="rankingPanel" class="side-panel side-panel--right" aria-label="ユーザーランキング">
+  <aside id="rankingPanel" class="side-panel side-panel--right" aria-label="ユーザーランキング" aria-hidden="true">
     <div class="side-panel__header">
       <span class="side-panel__title">🏆 ユーザーランキング</span>
       <button class="side-panel__close" data-close-panel="rankingPanel" aria-label="閉じる">×</button>
@@ -107,13 +117,13 @@
   </aside>
 
   <!-- Strip -->
-  <div class="strip" role="status">
+  <div class="strip" role="status" aria-live="polite">
     <div class="strip__pulse" aria-hidden="true"></div>
     <span><b><span id="stripCount">0</span></b> ピン表示中</span>
-    <span class="strip__sep">/</span>
+    <span class="strip__sep" aria-hidden="true">/</span>
     <span>全 <b><span id="stripTotal">0</span></b></span>
-    <button id="trendToggle" class="strip__btn strip__btn--pink">🔥 トレンド</button>
-    <button id="rankingToggle" class="strip__btn strip__btn--blue">🏆 ランキング</button>
+    <button id="trendToggle" class="strip__btn" type="button">🔥 トレンド</button>
+    <button id="rankingToggle" class="strip__btn strip__btn--blue" type="button">🏆 ランキング</button>
   </div>
 
   <!-- Compose Sheet -->
@@ -126,21 +136,21 @@
 
       <div class="sheet__section">
         <p class="sheet__label">カテゴリー</p>
-        <div id="composeCatSelector" class="catbar catbar--inline"></div>
+        <div id="composeCatSelector" class="catbar catbar--inline" role="radiogroup" aria-label="カテゴリー選択"></div>
       </div>
 
       <div class="sheet__section">
         <p class="sheet__label">あなたの一言（50字以内）</p>
-        <textarea id="composeText" placeholder="今、ここで何が起きてる？" maxlength="50" rows="3" aria-label="投稿テキスト"></textarea>
+        <textarea id="composeText" placeholder="今、ここで何が起きてる？" maxlength="50" rows="3" aria-label="投稿テキスト" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
         <div class="sheet__counter">
-          <span id="composeCount">0 / 50</span>
+          <span id="composeCount" aria-live="polite">0 / 50</span>
           <span class="sheet__hint">※ 個人情報・誹謗中傷は禁止</span>
         </div>
       </div>
 
       <div class="sheet__actions">
-        <button class="btn btn--ghost" data-close-compose>キャンセル</button>
-        <button id="composeSend" class="btn btn--primary">投稿する 🎯</button>
+        <button class="btn btn--ghost" data-close-compose type="button">キャンセル</button>
+        <button id="composeSend" class="btn btn--primary" type="button">投稿する 🎯</button>
       </div>
     </div>
   </div>
@@ -152,7 +162,7 @@
       <button class="detail__close" data-close-detail aria-label="閉じる">×</button>
 
       <div class="detail__cathead">
-        <span id="detailCatEmoji" class="detail__cat-emoji">📍</span>
+        <span id="detailCatEmoji" class="detail__cat-emoji" aria-hidden="true">📍</span>
         <div>
           <div id="detailCatLabel" class="detail__cat-label">カテゴリー</div>
           <div id="detailMeta" class="detail__meta">時間 ・ 場所</div>
@@ -164,17 +174,17 @@
       <div id="detailReactions" class="reactions" aria-label="リアクション"></div>
 
       <div class="detail__actions">
-        <button id="shareX" class="share-btn share-btn--x" title="Xでシェア" aria-label="Xでシェア">
-          <span class="share-btn__icon">𝕏</span><span>X</span>
+        <button id="shareX" class="share-btn share-btn--x" title="Xでシェア" aria-label="Xでシェア" type="button">
+          <span class="share-btn__icon" aria-hidden="true">𝕏</span><span>X</span>
         </button>
-        <button id="shareLine" class="share-btn share-btn--line" title="LINEで送る" aria-label="LINEで送る">
-          <span class="share-btn__icon">💬</span><span>LINE</span>
+        <button id="shareLine" class="share-btn share-btn--line" title="LINEで送る" aria-label="LINEで送る" type="button">
+          <span class="share-btn__icon" aria-hidden="true">💬</span><span>LINE</span>
         </button>
-        <button id="shareInstagram" class="share-btn share-btn--ig" title="Instagram" aria-label="Instagram用にコピー">
-          <span class="share-btn__icon">📷</span><span>IG</span>
+        <button id="shareInstagram" class="share-btn share-btn--ig" title="Instagram" aria-label="Instagram用にコピー" type="button">
+          <span class="share-btn__icon" aria-hidden="true">📷</span><span>IG</span>
         </button>
-        <button id="copyLink" class="share-btn share-btn--copy" title="リンクをコピー" aria-label="リンクをコピー">
-          <span class="share-btn__icon">🔗</span><span>コピー</span>
+        <button id="copyLink" class="share-btn share-btn--copy" title="リンクをコピー" aria-label="リンクをコピー" type="button">
+          <span class="share-btn__icon" aria-hidden="true">🔗</span><span>コピー</span>
         </button>
       </div>
 
@@ -191,15 +201,15 @@
       <h2 id="introTitle" class="intro__title">Pinly へようこそ</h2>
       <p class="intro__text">街の "今" を匿名でシェアしよう。<br>登録不要 ・ 50字 ・ 48時間で消える</p>
       <ul class="intro__list">
-        <li><b>1.</b> ＋ ボタンで地図に位置を合わせる</li>
-        <li><b>2.</b> カテゴリーを選んで50字でつぶやく</li>
-        <li><b>3.</b> 反応や報告でみんなと街を育てる</li>
+        <li><b>1</b><span>＋ ボタンで地図に位置を合わせる</span></li>
+        <li><b>2</b><span>カテゴリーを選んで50字でつぶやく</span></li>
+        <li><b>3</b><span>反応や報告でみんなと街を育てる</span></li>
       </ul>
       <label class="intro__check">
         <input type="checkbox" id="introAgree" checked>
-        <span><a href="./terms.html" target="_blank" rel="noopener">利用規約</a> と <a href="./privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a> に同意します</span>
+        <span><a href="./terms.html" target="_blank" rel="noopener noreferrer">利用規約</a> と <a href="./privacy.html" target="_blank" rel="noopener noreferrer">プライバシーポリシー</a> に同意します</span>
       </label>
-      <button id="introGo" class="btn btn--primary intro__cta">はじめる ✨</button>
+      <button id="introGo" class="btn btn--primary intro__cta" type="button">はじめる ✨</button>
     </div>
   </div>
 
@@ -213,27 +223,27 @@
       </div>
       <div class="menu__body">
         <div class="menu__user">
-          <div class="menu__avatar" id="menuAvatar">😊</div>
+          <div class="menu__avatar" id="menuAvatar" aria-hidden="true">😊</div>
           <div>
             <div class="menu__userid" id="menuUserId">--</div>
             <div class="menu__userstat" id="menuUserStat">0 投稿 ・ 0 反応</div>
           </div>
         </div>
 
-        <button class="menu__item" id="menuMyPins"><span>📌</span> 自分のピン一覧</button>
-        <button class="menu__item" id="menuTrend"><span>🔥</span> トレンドを見る</button>
-        <button class="menu__item" id="menuRanking"><span>🏆</span> ランキングを見る</button>
-        <button class="menu__item" id="menuTutorial"><span>💡</span> 使い方を見る</button>
-        <button class="menu__item" id="menuShare"><span>📣</span> Pinly をシェア</button>
-        <a class="menu__item" href="./about.html"><span>ℹ️</span> Pinly とは</a>
-        <a class="menu__item" href="./terms.html"><span>📜</span> 利用規約</a>
-        <a class="menu__item" href="./privacy.html"><span>🔒</span> プライバシー</a>
-        <a class="menu__item" href="./contact.html"><span>✉️</span> お問い合わせ</a>
-        <button class="menu__item menu__item--danger" id="menuClear"><span>🧹</span> ローカルデータをクリア</button>
+        <button class="menu__item" id="menuMyPins" type="button"><span aria-hidden="true">📌</span> 自分のピン一覧</button>
+        <button class="menu__item" id="menuTrend" type="button"><span aria-hidden="true">🔥</span> トレンドを見る</button>
+        <button class="menu__item" id="menuRanking" type="button"><span aria-hidden="true">🏆</span> ランキングを見る</button>
+        <button class="menu__item" id="menuTutorial" type="button"><span aria-hidden="true">💡</span> 使い方を見る</button>
+        <button class="menu__item" id="menuShare" type="button"><span aria-hidden="true">📣</span> Pinly をシェア</button>
+        <a class="menu__item" href="./about.html"><span aria-hidden="true">ℹ️</span> Pinly とは</a>
+        <a class="menu__item" href="./terms.html"><span aria-hidden="true">📜</span> 利用規約</a>
+        <a class="menu__item" href="./privacy.html"><span aria-hidden="true">🔒</span> プライバシー</a>
+        <a class="menu__item" href="./contact.html"><span aria-hidden="true">✉️</span> お問い合わせ</a>
+        <button class="menu__item menu__item--danger" id="menuClear" type="button"><span aria-hidden="true">🧹</span> ローカルデータをクリア</button>
 
         <div class="menu__footer">
-          <span>Pinly v1.0 · </span>
-          <a href="https://github.com/guttyanneruuuuuu/service6" target="_blank" rel="noopener">GitHub</a>
+          <span>Pinly v1.1 · </span>
+          <a href="https://github.com/guttyanneruuuuuu/service6" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
       </div>
     </div>
@@ -244,7 +254,7 @@
     <div class="detail__overlay" data-close-mypins></div>
     <div class="detail__panel">
       <button class="detail__close" data-close-mypins aria-label="閉じる">×</button>
-      <h2 id="myPinsTitle" class="detail__cat-label" style="font-size:22px;font-weight:900;color:var(--pink);margin-bottom:4px">📌 自分のピン</h2>
+      <h2 id="myPinsTitle" class="detail__cat-label" style="font-size:22px;font-weight:900;margin-bottom:4px">📌 自分のピン</h2>
       <p class="detail__meta" id="myPinsCount">0 件</p>
       <div id="myPinsList" class="my-pins__list"></div>
     </div>
@@ -252,6 +262,16 @@
 
   <!-- Toast -->
   <div id="toast" class="toast" hidden role="alert" aria-live="assertive"></div>
+
+  <!-- noscript fallback -->
+  <noscript>
+    <div style="position:fixed;inset:0;display:grid;place-items:center;background:#fff5fb;color:#2d1a26;font-family:system-ui,sans-serif;padding:24px;text-align:center;z-index:99999">
+      <div>
+        <h1 style="color:#ff1f6d">Pinly</h1>
+        <p>このアプリを利用するには JavaScript を有効にしてください。</p>
+      </div>
+    </div>
+  </noscript>
 
 </body>
 </html>
