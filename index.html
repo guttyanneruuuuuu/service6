@@ -30,7 +30,7 @@
     <div class="appbar__search">
       <input type="text" id="searchInput" placeholder="街の声を検索...">
     </div>
-    <div class="appbar__actions">
+    <div class="appbar__actions" style="display: flex; gap: 8px;">
       <button id="locateBtn" class="iconbtn" title="現在地">📍</button>
       <button id="newPinBtn" class="iconbtn" title="ピンを刺す">＋</button>
     </div>
@@ -47,7 +47,7 @@
 
   <!-- FAB -->
   <button id="fab" class="fab" title="ピンを刺す">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
   </button>
 
   <!-- Strip -->
@@ -60,11 +60,18 @@
   <div id="composeSheet" class="sheet" hidden>
     <div class="sheet__overlay" data-close-compose></div>
     <div class="sheet__panel">
-      <h2 style="margin-bottom:15px; font-size:20px; font-weight:800;">ピンを刺す</h2>
-      <textarea id="composeText" placeholder="今、ここで何が起きてる？ (50文字以内)" maxlength="50"></textarea>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
-        <span id="composeCount" style="font-size:12px; opacity:0.6;">0 / 50</span>
-        <button id="composeSend" class="btn btn--primary">投稿する</button>
+      <h2 style="margin-bottom:20px; font-size:22px; font-weight:900; color:var(--pink);">ピンを刺す</h2>
+      
+      <div style="margin-bottom: 15px;">
+        <p style="font-size:13px; font-weight:700; margin-bottom:8px; opacity:0.7;">カテゴリーを選択</p>
+        <div id="composeCatSelector" class="catbar" style="position:static; transform:none; margin:0; width:100%; box-shadow:none; border:none; padding:0; background:transparent;"></div>
+      </div>
+
+      <textarea id="composeText" placeholder="今、ここで何が起きてる？ (50文字以内)" maxlength="50" rows="3"></textarea>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+        <span id="composeCount" style="font-size:13px; font-weight:700; opacity:0.5;">0 / 50</span>
+        <button id="composeSend" class="btn btn--primary">投稿する！</button>
       </div>
     </div>
   </div>
@@ -73,19 +80,20 @@
   <div id="detail" class="detail" hidden>
     <div class="detail__overlay" data-close-detail></div>
     <div class="detail__panel">
-      <div id="detailAuthor" style="font-size:12px; opacity:0.6; margin-bottom:10px;"></div>
-      <p id="detailText" style="font-size:18px; font-weight:700; line-height:1.5;"></p>
-      <button class="btn btn--primary" style="width:100%; margin-top:20px;" data-close-detail>閉じる</button>
+      <div id="detailAuthor" style="font-size:13px; font-weight:700; opacity:0.6; margin-bottom:12px; color:var(--text-dim);"></div>
+      <p id="detailText" style="font-size:20px; font-weight:800; line-height:1.6; color:var(--text); margin:0;"></p>
+      <button class="btn btn--primary" style="width:100%; margin-top:25px;" data-close-detail>閉じる</button>
     </div>
   </div>
 
   <!-- Intro -->
-  <div id="intro" class="intro">
+  <div id="intro" class="intro" hidden>
     <div class="intro__overlay"></div>
-    <div class="intro__panel">
-      <h2 style="font-size:28px; font-weight:900; margin-bottom:15px;">Pinlyへようこそ</h2>
-      <p style="margin-bottom:25px; opacity:0.8;">街の"今"を匿名で共有。気になる場所をタップして、一言刺してみよう。</p>
-      <button id="introGo" class="btn btn--primary" style="width:100%;">はじめる</button>
+    <div class="intro__panel" style="text-align: center;">
+      <div class="boot__logo" style="margin: 0 auto 25px; animation: none;"></div>
+      <h2 style="font-size:28px; font-weight:900; margin-bottom:15px; color:var(--pink);">Pinlyへようこそ！</h2>
+      <p style="margin-bottom:30px; font-weight:600; line-height:1.6; color:var(--text-dim);">街の"今"を匿名でシェアしよう。<br>気になる場所をタップして、<br>あなたの発見をピン留め！</p>
+      <button id="introGo" class="btn btn--primary" style="width:100%; font-size:18px; padding:16px;">はじめる ✨</button>
     </div>
   </div>
 

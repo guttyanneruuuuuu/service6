@@ -104,6 +104,23 @@ function initUI() {
     });
   }
 
+  // Compose Category Selector
+  const composeCatContainer = document.getElementById('composeCatSelector');
+  if (composeCatContainer) {
+    composeCatContainer.innerHTML = '';
+    CATS_FOR_COMPOSE.forEach(c => {
+        const b = document.createElement('button');
+        b.className = 'catbar__btn' + (c.id === STATE.composeCat ? ' active' : '');
+        b.dataset.cat = c.id;
+        b.innerHTML = `<span>${c.emoji}</span><span>${c.label}</span>`;
+        b.onclick = () => {
+            STATE.composeCat = c.id;
+            composeCatContainer.querySelectorAll('.catbar__btn').forEach(el => el.classList.toggle('active', el.dataset.cat === c.id));
+        };
+        composeCatContainer.appendChild(b);
+    });
+  }
+
   // Search
   const search = document.getElementById('searchInput');
   if (search) {
@@ -258,8 +275,14 @@ function openDetail(id) {
 }
 
 function renderDetail(p) {
+  const cat = getCategory(p.cat);
   document.getElementById('detailText').textContent = p.text;
-  document.getElementById('detailAuthor').textContent = p.author.slice(0, 8);
+  document.getElementById('detailAuthor').textContent = `${cat.emoji} ${cat.label} • ${p.author.slice(0, 8)}`;
+  
+  const panel = document.querySelector('.detail__panel');
+  if (panel) {
+      panel.style.borderTop = `8px solid ${cat.color}`;
+  }
 }
 
 function closeDetail() {
@@ -273,6 +296,8 @@ function locateMe() {
   navigator.geolocation.getCurrentPosition((pos) => {
     const { longitude, latitude } = pos.coords;
     STATE.map.flyTo({ center: [longitude, latitude], zoom: 15 });
+  }, (err) => {
+      showToast('現在地を取得できませんでした');
   });
 }
 

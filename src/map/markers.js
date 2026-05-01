@@ -11,6 +11,7 @@ export class MarkerLayer {
     this._allPins = [];
     this._activePins = [];
 
+    // Use moveend and zoomend to re-render clusters/markers
     map.on('moveend', () => this._render());
     map.on('zoomend', () => this._render());
   }
@@ -27,8 +28,8 @@ export class MarkerLayer {
   }
 
   addPinAnimated(pin) {
-    if (this._activePins.indexOf(pin) === -1) this._activePins = [pin, ...this._activePins];
-    if (this._allPins.indexOf(pin) === -1) this._allPins = [pin, ...this._allPins];
+    if (!this._activePins.find(p => p.id === pin.id)) this._activePins = [pin, ...this._activePins];
+    if (!this._allPins.find(p => p.id === pin.id)) this._allPins = [pin, ...this._allPins];
     this._render(pin.id);
   }
 
@@ -52,6 +53,7 @@ export class MarkerLayer {
     this.clusters = [];
 
     if (cluster) {
+      // Remove all individual markers when clustering
       this.markers.forEach((m) => m.remove());
       this.markers.clear();
 
@@ -72,7 +74,10 @@ export class MarkerLayer {
           const el = document.createElement('div');
           el.className = 'pinly-cluster' + (b.n >= 10 ? ' is-large' : '');
           el.innerHTML = `<span>${b.n > 99 ? '99+' : b.n}</span>`;
-          el.addEventListener('click', () => this.onClusterClick && this.onClusterClick({ lat, lng, samples: b.samples }));
+          el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.onClusterClick && this.onClusterClick({ lat, lng, samples: b.samples });
+          });
           const m = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
           this.clusters.push(m);
         }
@@ -86,7 +91,11 @@ export class MarkerLayer {
         }
       }
       for (const p of this._activePins) {
-        if (this.markers.has(p.id)) continue;
+        if (this.markers.has(p.id)) {
+            // Ensure position is correct even if it was slightly off due to anchor issues
+            this.markers.get(p.id).setLngLat([p.lng, p.lat]);
+            continue;
+        }
         this._addMarker(p, p.id === animateNewId);
       }
     }
@@ -111,13 +120,24 @@ export class MarkerLayer {
       e.stopPropagation();
       this.onPinClick && this.onPinClick(pin);
     });
-    // Anchor 'bottom' correctly positions the tip of the pin at the coordinate
-    const m = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([pin.lng, pin.lat]).addTo(this.map);
+    
+    // Create marker with 'bottom' anchor
+    const m = new maplibregl.Marker({ 
+        element: el, 
+        anchor: 'bottom',
+        offset: [0, 0] // Ensure no unexpected offset
+    }).setLngLat([pin.lng, pin.lat]).addTo(this.map);
+    
     this.markers.set(pin.id, m);
   }
 
   flyTo(pin) {
-    this.map.flyTo({ center: [pin.lng, pin.lat], zoom: Math.max(this.map.getZoom(), 15), speed: 1.4 });
+    this.map.flyTo({ 
+        center: [pin.lng, pin.lat], 
+        zoom: Math.max(this.map.getZoom(), 15), 
+        speed: 1.4,
+        essential: true 
+    });
   }
 }
 
