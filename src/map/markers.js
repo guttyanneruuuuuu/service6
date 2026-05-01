@@ -1,15 +1,3 @@
-/**
- * Map marker layer for Pinly.
- *
- * Uses MapLibre's HTML markers (not native symbol layers) so each pin
- * is a real DOM node. This lets us:
- *   - animate a "pin drop" CSS keyframe on insertion
- *   - show preview labels on hover
- *   - keep CSS-driven theming
- *
- * For dense areas we cluster manually based on screen-space distance.
- */
-
 import maplibregl from 'maplibre-gl';
 import { getCategory } from '../data/categories.js';
 
@@ -20,65 +8,54 @@ export class MarkerLayer {
     this.onClusterClick = onClusterClick;
     this.markers = new Map();   // id -> maplibregl.Marker
     this.clusters = [];         // array of cluster markers currently displayed
-    this._renderToken = 0;
-    this._raf = null;
     this._allPins = [];
     this._activePins = [];
 
-    map.on('moveend', () => this._scheduleRender());
-    map.on('zoomend', () => this._scheduleRender());
+    map.on('moveend', () => this._render());
+    map.on('zoomend', () => this._render());
   }
 
   setPins(pins) {
     this._allPins = pins;
     this._activePins = pins;
-    this._scheduleRender(true);
+    this._render();
   }
 
   setActive(pins) {
     this._activePins = pins;
-    this._scheduleRender(true);
+    this._render();
   }
 
   addPinAnimated(pin) {
     if (this._activePins.indexOf(pin) === -1) this._activePins = [pin, ...this._activePins];
     if (this._allPins.indexOf(pin) === -1) this._allPins = [pin, ...this._allPins];
-    this._scheduleRender(true, pin.id);
+    this._render(pin.id);
   }
 
   updatePin(pin) {
-    // No structural change needed — visuals identical unless category changes
     const existing = this.markers.get(pin.id);
     if (!existing) return;
-    const data = pin;
-    const cat = getCategory(data.cat);
+    const cat = getCategory(pin.cat);
     const node = existing.getElement();
     node.style.setProperty('--pin-color', cat.color);
     const label = node.querySelector('.pinly-marker__label');
-    if (label) label.textContent = data.text;
+    if (label) label.textContent = pin.text;
   }
 
-  _scheduleRender(force = false, animateNewId = null) {
-    if (this._raf) cancelAnimationFrame(this._raf);
-    this._raf = requestAnimationFrame(() => this._render(force, animateNewId));
-  }
-
-  _render(force, animateNewId) {
+  _render(animateNewId = null) {
     const map = this.map;
     const zoom = map.getZoom();
-    const cluster = zoom < 12;
+    const cluster = zoom < 13;
 
     // Clear previous cluster markers
     this.clusters.forEach((m) => m.remove());
     this.clusters = [];
 
     if (cluster) {
-      // Hide all individual markers in clusters mode
       this.markers.forEach((m) => m.remove());
       this.markers.clear();
 
-      // Build clusters by snapping to grid in screen space
-      const gridPx = 60;
+      const gridPx = 70;
       const buckets = new Map();
       for (const p of this._activePins) {
         const proj = map.project([p.lng, p.lat]);
@@ -94,24 +71,20 @@ export class MarkerLayer {
         } else {
           const el = document.createElement('div');
           el.className = 'pinly-cluster' + (b.n >= 10 ? ' is-large' : '');
-          el.textContent = b.n > 99 ? '99+' : String(b.n);
+          el.innerHTML = `<span>${b.n > 99 ? '99+' : b.n}</span>`;
           el.addEventListener('click', () => this.onClusterClick && this.onClusterClick({ lat, lng, samples: b.samples }));
           const m = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
           this.clusters.push(m);
         }
       });
     } else {
-      // Individual markers
       const desiredIds = new Set(this._activePins.map((p) => p.id));
-
-      // Remove markers that are no longer active
       for (const [id, m] of this.markers) {
         if (!desiredIds.has(id)) {
           m.remove();
           this.markers.delete(id);
         }
       }
-      // Add new markers
       for (const p of this._activePins) {
         if (this.markers.has(p.id)) continue;
         this._addMarker(p, p.id === animateNewId);
@@ -123,14 +96,11 @@ export class MarkerLayer {
     const cat = getCategory(pin.cat);
     const el = document.createElement('div');
 
-    // Compute time-decay age class based on pin timestamp
     const ageHours = pin.ts ? (Date.now() / 1000 - pin.ts) / 3600 : 0;
     const ageClass = ageHours >= 24 ? ' is-old' : ageHours >= 6 ? ' is-stale' : '';
 
     el.className = 'pinly-marker' + (animate ? ' is-new' : '') + (pin.official ? ' is-official' : '') + ageClass;
     el.style.setProperty('--pin-color', cat.color);
-    // Wrap content in __inner so hover lift transforms don't fight
-    // MapLibre's inline `transform` that controls geographic positioning.
     el.innerHTML = `
       <div class="pinly-marker__inner">
         <div class="pinly-marker__pin"></div>
@@ -141,12 +111,13 @@ export class MarkerLayer {
       e.stopPropagation();
       this.onPinClick && this.onPinClick(pin);
     });
+    // Anchor 'bottom' correctly positions the tip of the pin at the coordinate
     const m = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([pin.lng, pin.lat]).addTo(this.map);
     this.markers.set(pin.id, m);
   }
 
   flyTo(pin) {
-    this.map.flyTo({ center: [pin.lng, pin.lat], zoom: Math.max(this.map.getZoom(), 14), speed: 1.4 });
+    this.map.flyTo({ center: [pin.lng, pin.lat], zoom: Math.max(this.map.getZoom(), 15), speed: 1.4 });
   }
 }
 

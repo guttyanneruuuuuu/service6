@@ -1,214 +1,97 @@
 <!DOCTYPE html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" content="#0a0d14" />
-    <title>Pinly — 街の"今"が刺さる地図</title>
-    <meta name="description" content="世界中の街角に、誰でも匿名で短いピンを刺せるリアルタイム地図SNS。今そこにある人間のリアルだけが、ここにある。" />
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Pinly — 街の"今"が刺さる地図</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+  <link rel="stylesheet" href="./src/styles/main.css" />
+</head>
+<body>
 
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="Pinly — 街の今が刺さる地図" />
-    <meta property="og:description" content="街角に匿名のひとことを刺す。地図を開けば、街の今が見える。" />
-    <meta property="og:image" content="./og.svg" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Pinly — 街の今が刺さる地図" />
-    <meta name="twitter:description" content="街角に匿名のひとことを刺す。地図を開けば、街の今が見える。" />
-    <meta name="twitter:image" content="./og.svg" />
+  <!-- Boot -->
+  <div id="boot" class="boot">
+    <div class="boot__logo"></div>
+  </div>
 
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
-    <link rel="stylesheet" href="./src/styles/main.css" />
-  </head>
-  <body>
-    <!-- Boot screen -->
-    <div id="boot" class="boot">
-      <div class="boot__pin">
-        <svg viewBox="0 0 64 80" width="64" height="80" aria-hidden="true">
-          <defs>
-            <linearGradient id="bootPin" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#ff5b8a"/>
-              <stop offset="1" stop-color="#ff2e6d"/>
-            </linearGradient>
-          </defs>
-          <path d="M32 2C16 2 4 14 4 30c0 19 28 48 28 48s28-29 28-48C60 14 48 2 32 2z" fill="url(#bootPin)"/>
-          <circle cx="32" cy="28" r="10" fill="#fff"/>
-        </svg>
-      </div>
-      <div class="boot__name">Pinly</div>
-      <div class="boot__sub">街の"今"を読み込み中…</div>
+  <!-- Map -->
+  <div id="map" class="map"></div>
+
+  <!-- App Bar -->
+  <div class="appbar">
+    <div class="appbar__brand">
+      <div class="appbar__logo"></div>
+      <span>Pinly</span>
     </div>
+    <div class="appbar__search">
+      <input type="text" id="searchInput" placeholder="街の声を検索...">
+    </div>
+    <div class="appbar__actions">
+      <button id="locateBtn" class="iconbtn" title="現在地">📍</button>
+      <button id="newPinBtn" class="iconbtn" title="ピンを刺す">＋</button>
+    </div>
+  </div>
 
-    <!-- Map root -->
-    <div id="map" class="map" aria-label="Pinly map"></div>
+  <!-- Category Bar -->
+  <div id="catbar" class="catbar"></div>
 
-    <!-- Top app bar -->
-    <header class="appbar">
-      <div class="appbar__brand">
-        <span class="appbar__logo" aria-hidden="true"></span>
-        <span class="appbar__name">Pinly</span>
-      </div>
-      <div class="appbar__search">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input id="searchInput" type="text" placeholder="場所・キーワードで探す（例: 渋谷、ラーメン、穴場）" />
-      </div>
-      <div class="appbar__actions">
-        <button class="iconbtn" id="trendingBtn" title="トレンド">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-        </button>
-        <button class="iconbtn" id="locateBtn" title="現在地">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/></svg>
-        </button>
-        <button class="iconbtn iconbtn--accent" id="newPinBtn" title="ピンを刺す">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-        </button>
-      </div>
-    </header>
+  <!-- Targeting Crosshair -->
+  <div id="targetCross" class="targetcross" hidden>
+    <div class="targetcross__ring"></div>
+    <div class="targetcross__dot"></div>
+  </div>
 
-    <!-- Category bar -->
-    <nav class="catbar" id="catbar"></nav>
+  <!-- FAB -->
+  <button id="fab" class="fab" title="ピンを刺す">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+  </button>
 
-    <!-- Trending side panel -->
-    <aside class="trend" id="trend" hidden>
-      <div class="trend__head">
-        <h2>今、伸びてる</h2>
-        <button class="iconbtn iconbtn--ghost" data-close-trend aria-label="閉じる">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-        </button>
-      </div>
-      <div class="trend__tabs" role="tablist">
-        <button class="trend__tab active" data-tab="hot">🔥 ホット</button>
-        <button class="trend__tab" data-tab="new">⚡ 新着</button>
-        <button class="trend__tab" data-tab="spots">📍 スポット</button>
-      </div>
-      <div class="trend__list" id="trendList"></div>
-    </aside>
+  <!-- Strip -->
+  <div class="strip">
+    <div class="strip__pulse"></div>
+    <span><b><span id="stripCount">0</span></b> ピンが刺されています</span>
+  </div>
 
-    <!-- Compose pin sheet -->
-    <div class="sheet" id="composeSheet" hidden>
-      <div class="sheet__overlay" data-close-compose></div>
-      <div class="sheet__panel">
-        <div class="sheet__handle"></div>
-        <div class="sheet__head">
-          <h2>ここにピンを刺す</h2>
-          <button class="iconbtn iconbtn--ghost" data-close-compose aria-label="閉じる">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-          </button>
-        </div>
-        <div class="sheet__loc" id="composeLoc">地図上の位置: —</div>
-
-        <div class="compose__cats" id="composeCats"></div>
-
-        <textarea id="composeText" maxlength="50" placeholder="この場所の今をひとこと（最大50字）&#10;例: ここのWi-Fiパス、cafe2024。穴場。"></textarea>
-        <div class="compose__footer">
-          <span id="composeCount" class="compose__count">0 / 50</span>
-          <button class="btn btn--primary" id="composeSend">
-            <span>ピンを刺す</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-          </button>
-        </div>
-        <div class="compose__hint">匿名で投稿されます。位置情報は地図上のピン位置のみが共有されます。</div>
+  <!-- Compose Sheet -->
+  <div id="composeSheet" class="sheet" hidden>
+    <div class="sheet__overlay" data-close-compose></div>
+    <div class="sheet__panel">
+      <h2 style="margin-bottom:15px; font-size:20px; font-weight:800;">ピンを刺す</h2>
+      <textarea id="composeText" placeholder="今、ここで何が起きてる？ (50文字以内)" maxlength="50"></textarea>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
+        <span id="composeCount" style="font-size:12px; opacity:0.6;">0 / 50</span>
+        <button id="composeSend" class="btn btn--primary">投稿する</button>
       </div>
     </div>
+  </div>
 
-    <!-- Pin detail popup -->
-    <div class="detail" id="detail" hidden>
-      <div class="detail__overlay" data-close-detail></div>
-      <div class="detail__panel">
-        <div class="detail__head">
-          <div class="detail__cat" id="detailCat">📍</div>
-          <div>
-            <div class="detail__author" id="detailAuthor">匿名のだれか</div>
-            <div class="detail__when" id="detailWhen">—</div>
-          </div>
-          <button class="iconbtn iconbtn--ghost" data-close-detail aria-label="閉じる" style="margin-left:auto">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-          </button>
-        </div>
-        <p class="detail__text" id="detailText"></p>
-        <div class="detail__loc" id="detailLoc">—</div>
-        <div class="detail__reactions" id="detailReactions"></div>
-        <div class="detail__actions">
-          <button class="btn btn--ghost" id="detailShare">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4"/><path d="m15.4 6.5-6.8 4"/></svg>
-            <span>シェア</span>
-          </button>
-          <button class="btn btn--ghost" id="detailReport">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-            <span>通報</span>
-          </button>
-        </div>
-      </div>
+  <!-- Detail Modal -->
+  <div id="detail" class="detail" hidden>
+    <div class="detail__overlay" data-close-detail></div>
+    <div class="detail__panel">
+      <div id="detailAuthor" style="font-size:12px; opacity:0.6; margin-bottom:10px;"></div>
+      <p id="detailText" style="font-size:18px; font-weight:700; line-height:1.5;"></p>
+      <button class="btn btn--primary" style="width:100%; margin-top:20px;" data-close-detail>閉じる</button>
     </div>
+  </div>
 
-    <!-- Compose target marker (visible during compose) -->
-    <div id="targetCross" class="targetcross" hidden>
-      <div class="targetcross__ring"></div>
-      <div class="targetcross__dot"></div>
-      <div class="targetcross__label">この地点にピン</div>
+  <!-- Intro -->
+  <div id="intro" class="intro">
+    <div class="intro__overlay"></div>
+    <div class="intro__panel">
+      <h2 style="font-size:28px; font-weight:900; margin-bottom:15px;">Pinlyへようこそ</h2>
+      <p style="margin-bottom:25px; opacity:0.8;">街の"今"を匿名で共有。気になる場所をタップして、一言刺してみよう。</p>
+      <button id="introGo" class="btn btn--primary" style="width:100%;">はじめる</button>
     </div>
+  </div>
 
-    <!-- Toast -->
-    <div id="toast" class="toast" hidden></div>
+  <!-- Toast -->
+  <div id="toast" class="toast" hidden></div>
 
-    <!-- FAB -->
-    <button class="fab" id="fab" aria-label="ピンを刺す">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-    </button>
-
-    <!-- Bottom strip: live counter & monetize hint -->
-    <div class="strip" id="strip">
-      <div class="strip__pulse"></div>
-      <span><b id="stripCount">—</b> ピン</span>
-      <span class="strip__sep"></span>
-      <span><b id="stripPeople">—</b> 人がここに</span>
-      <button class="strip__pro" id="proBtn">公式ピンを取る →</button>
-    </div>
-
-    <!-- Pro modal -->
-    <div class="pro" id="pro" hidden>
-      <div class="pro__overlay" data-close-pro></div>
-      <div class="pro__panel">
-        <button class="iconbtn iconbtn--ghost" data-close-pro aria-label="閉じる" style="position:absolute;top:14px;right:14px">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-        </button>
-        <div class="pro__badge">PINLY OFFICIAL</div>
-        <h2>あなたのお店の<br/>"公式ピン"を立てる。</h2>
-        <p>店舗オーナー・施設・イベント主催者向け。永続表示・通知・統計分析つきの公式ピン。</p>
-        <div class="pro__price"><span class="pro__amt">¥980</span><span class="pro__per">/ 月</span></div>
-        <ul class="pro__list">
-          <li>✓ 認証バッジつきの公式ピン</li>
-          <li>✓ 半径500mの周辺ユーザーに通知</li>
-          <li>✓ 来訪・閲覧・反応の分析ダッシュボード</li>
-          <li>✓ 期間限定キャンペーンピン</li>
-        </ul>
-        <button class="btn btn--primary" id="proWaitlist">無料で先行登録する</button>
-        <div class="pro__meta">先行登録は永久ロック価格 ¥480/月 適用</div>
-      </div>
-    </div>
-
-    <!-- First run intro -->
-    <div class="intro" id="intro" hidden>
-      <div class="intro__overlay"></div>
-      <div class="intro__panel">
-        <div class="intro__pin">
-          <svg viewBox="0 0 64 80" width="48" height="60"><path d="M32 2C16 2 4 14 4 30c0 19 28 48 28 48s28-29 28-48C60 14 48 2 32 2z" fill="#ff2e6d"/><circle cx="32" cy="28" r="10" fill="#fff"/></svg>
-        </div>
-        <h2>街の"今"を、ひとことで。</h2>
-        <p>気になった場所をタップして、50字以内のひとことを刺すだけ。<br/>登録不要・完全匿名。</p>
-        <div class="intro__steps">
-          <div><b>1</b><span>地図をタップ</span></div>
-          <div><b>2</b><span>50字でつぶやく</span></div>
-          <div><b>3</b><span>世界に刺さる</span></div>
-        </div>
-        <button class="btn btn--primary" id="introGo">はじめる</button>
-      </div>
-    </div>
-
-    <script type="module" src="./src/main.js"></script>
-  </body>
+  <script type="module" src="./src/main.js"></script>
+</body>
 </html>
