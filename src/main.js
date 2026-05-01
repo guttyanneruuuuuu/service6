@@ -349,8 +349,6 @@ async function submitPin() {
   else if (lowerText.match(/遊|楽|ライブ|イベント|祭り/)) cat = 'fun';
   else if (lowerText.match(/綺麗|景色|スポット|公園|花/)) cat = 'spot';
   else if (lowerText.match(/便利|スーパー|病院|生活/)) cat = 'life';
-
-  const [lng, lat] = STATE.composeLngLat;
   const pin = await STATE.store.add({
     lat, lng,
     cat: cat,

@@ -6,7 +6,9 @@
  *      can see (including seed pins + locally created pins).
  *   2. BroadcastChannel — instant cross-tab sync within the same browser
  *      so demos with multiple tabs feel "real-time".
- *   3. Seed JSON      — public/pins.json bootstrap so a fresh visit is
+ *   3. Supabase       — optional persistent cloud storage for real-time sync
+ *      across devices and users.
+ *   4. Seed JSON      — public/pins.json bootstrap so a fresh visit is
  *      not an empty map. Loaded once and merged.
  *
  * The schema is intentionally simple so it could be backed by Supabase
@@ -27,6 +29,14 @@
  *   }
  */
 
+import { 
+  initSupabase, 
+  fetchPinsFromSupabase, 
+  insertPinToSupabase,
+  updatePinInSupabase,
+  subscribeToSupabasePins 
+} from './supabase.js';
+
 const LS_KEY = 'pinly.pins.v1';
 const LS_SELF = 'pinly.self.v1';
 const SEED_FLAG = 'pinly.seed.v1';
@@ -39,14 +49,37 @@ export class PinStore extends EventTarget {
     this.self = this._loadSelf();
     this.bc = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel(BC_NAME) : null;
     if (this.bc) this.bc.onmessage = (e) => this._onBC(e.data);
+    this.supabase = null;
+    this.supabaseSubscription = null;
   }
 
   async init() {
-    // 1. Load from localStorage
+    // 0. Initialize Supabase
+    this.supabase = await initSupabase();
+    
+    // 1. Load from Supabase if available
+    if (this.supabase) {
+      try {
+        const remotePins = await fetchPinsFromSupabase();
+        remotePins.forEach((p) => {
+          const normalized = this._normalize(p);
+          this.pins.set(normalized.id, normalized);
+        });
+        
+        // Subscribe to real-time updates
+        this.supabaseSubscription = subscribeToSupabasePins((payload) => {
+          this._onSupabaseChange(payload);
+        });
+      } catch (err) {
+        console.warn('Supabase sync failed, using local storage:', err);
+      }
+    }
+    
+    // 2. Load from localStorage
     const local = this._loadLS();
     local.forEach((p) => this.pins.set(p.id, p));
 
-    // 2. Merge seed pins on first visit (or if local is empty)
+    // 3. Merge seed pins on first visit (or if local is empty)
     const seedNeeded = !localStorage.getItem(SEED_FLAG) || this.pins.size === 0;
     if (seedNeeded) {
       try {
@@ -135,6 +168,12 @@ export class PinStore extends EventTarget {
     });
     this.pins.set(pin.id, pin);
     this._saveLS();
+    
+    // Save to Supabase
+    if (this.supabase) {
+      insertPinToSupabase(pin).catch(err => console.error('Failed to save to Supabase:', err));
+    }
+    
     this._emit('add', pin);
     this._broadcast({ t: 'add', pin });
     return pin;
@@ -153,6 +192,12 @@ export class PinStore extends EventTarget {
       p.reactions[emoji] = (p.reactions[emoji] || 0) + 1;
     }
     this._saveLS();
+    
+    // Update in Supabase
+    if (this.supabase) {
+      updatePinInSupabase(id, { reactions: p.reactions }).catch(err => console.error('Failed to update reactions:', err));
+    }
+    
     this._emit('update', p);
     this._broadcast({ t: 'update', pin: p });
     return p;
@@ -251,6 +296,23 @@ export class PinStore extends EventTarget {
       this.pins.set(p.id, p);
       this._saveLS();
       this._emit('update', p);
+    }
+  }
+
+  /* ---------- Supabase handlers ---------- */
+  _onSupabaseChange(payload) {
+    // Handle real-time updates from Supabase
+    const { eventType, new: newRecord, old: oldRecord } = payload;
+    
+    if (eventType === 'INSERT' || eventType === 'UPDATE') {
+      const p = this._normalize(newRecord);
+      this.pins.set(p.id, p);
+      this._saveLS();
+      this._emit(eventType === 'INSERT' ? 'add' : 'update', p);
+    } else if (eventType === 'DELETE') {
+      this.pins.delete(oldRecord.id);
+      this._saveLS();
+      this._emit('delete', oldRecord);
     }
   }
 
