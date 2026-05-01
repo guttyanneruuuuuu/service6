@@ -1,73 +1,47 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0a0d14"/>
-      <stop offset="0.6" stop-color="#10131d"/>
-      <stop offset="1" stop-color="#1a0e1a"/>
-    </linearGradient>
+    <radialGradient id="bg" cx="80%" cy="20%" r="80%">
+      <stop offset="0%" stop-color="#ff2e6d" stop-opacity="0.35"/>
+      <stop offset="55%" stop-color="#0a0d14" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#0a0d14"/>
+    </radialGradient>
     <linearGradient id="pin" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#ff5b8a"/>
       <stop offset="1" stop-color="#ff2e6d"/>
     </linearGradient>
-    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0" stop-color="#ff2e6d" stop-opacity="0.5"/>
-      <stop offset="1" stop-color="#ff2e6d" stop-opacity="0"/>
-    </radialGradient>
+    <pattern id="grid" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    </pattern>
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
 
-  <!-- Map grid feeling -->
-  <g stroke="rgba(255,255,255,0.04)" stroke-width="1">
-    <line x1="0" y1="120" x2="1200" y2="120"/>
-    <line x1="0" y1="240" x2="1200" y2="240"/>
-    <line x1="0" y1="360" x2="1200" y2="360"/>
-    <line x1="0" y1="480" x2="1200" y2="480"/>
-    <line x1="0" y1="600" x2="1200" y2="600"/>
-    <line x1="200" y1="0" x2="200" y2="630"/>
-    <line x1="400" y1="0" x2="400" y2="630"/>
-    <line x1="600" y1="0" x2="600" y2="630"/>
-    <line x1="800" y1="0" x2="800" y2="630"/>
-    <line x1="1000" y1="0" x2="1000" y2="630"/>
+  <!-- pin clusters scattered like a map -->
+  <g transform="translate(900,160)">
+    <path d="M0 0c-25 0-44 19-44 44 0 31 44 76 44 76s44-45 44-76C44 19 25 0 0 0z" fill="url(#pin)" filter="drop-shadow(0 12px 24px rgba(255,46,109,.5))"/>
+    <circle cx="0" cy="44" r="16" fill="#fff"/>
+  </g>
+  <g transform="translate(770,300)" opacity="0.85">
+    <path d="M0 0c-18 0-32 14-32 32 0 22 32 55 32 55s32-33 32-55C32 14 18 0 0 0z" fill="#7ce7ff"/>
+    <circle cx="0" cy="32" r="11" fill="#0a0d14"/>
+  </g>
+  <g transform="translate(1010,400)" opacity="0.85">
+    <path d="M0 0c-18 0-32 14-32 32 0 22 32 55 32 55s32-33 32-55C32 14 18 0 0 0z" fill="#ff8c42"/>
+    <circle cx="0" cy="32" r="11" fill="#0a0d14"/>
+  </g>
+  <g transform="translate(880,470)" opacity="0.85">
+    <path d="M0 0c-15 0-26 11-26 26 0 18 26 44 26 44s26-26 26-44C26 11 15 0 0 0z" fill="#5dffae"/>
+    <circle cx="0" cy="26" r="9" fill="#0a0d14"/>
   </g>
 
-  <!-- Pin glow -->
-  <circle cx="900" cy="290" r="220" fill="url(#glow)"/>
-
-  <!-- Big pin -->
-  <g transform="translate(820,140)">
-    <path d="M80 0C36 0 0 36 0 80c0 60 80 140 80 140s80-80 80-140C160 36 124 0 80 0z" fill="url(#pin)"/>
-    <circle cx="80" cy="80" r="30" fill="#fff"/>
-  </g>
-
-  <!-- Other small pins scattered -->
-  <g opacity="0.85">
-    <g transform="translate(120,180) scale(0.4)">
-      <path d="M64 0C28 0 0 28 0 64c0 48 64 112 64 112s64-64 64-112C128 28 100 0 64 0z" fill="#7ce7ff"/>
-      <circle cx="64" cy="64" r="22" fill="#fff"/>
-    </g>
-    <g transform="translate(200,400) scale(0.35)">
-      <path d="M64 0C28 0 0 28 0 64c0 48 64 112 64 112s64-64 64-112C128 28 100 0 64 0z" fill="#ff8c42"/>
-      <circle cx="64" cy="64" r="22" fill="#fff"/>
-    </g>
-    <g transform="translate(400,260) scale(0.3)">
-      <path d="M64 0C28 0 0 28 0 64c0 48 64 112 64 112s64-64 64-112C128 28 100 0 64 0z" fill="#5dffae"/>
-      <circle cx="64" cy="64" r="22" fill="#fff"/>
-    </g>
-  </g>
-
-  <!-- Text -->
   <g font-family="Inter, system-ui, sans-serif">
-    <text x="80" y="320" fill="#f3f5fb" font-size="92" font-weight="800" letter-spacing="-3">街の"今"が、</text>
-    <text x="80" y="420" fill="#ff5b8a" font-size="92" font-weight="800" letter-spacing="-3">刺さる地図。</text>
-    <text x="80" y="490" fill="#a3aac0" font-size="26" font-weight="500">匿名・50字・リアルタイム。Pinlyで街につぶやく。</text>
-
+    <text x="80" y="270" fill="#f3f5fb" font-size="120" font-weight="800" letter-spacing="-4">街の"今"が、</text>
+    <text x="80" y="395" fill="url(#pin)" font-size="120" font-weight="800" letter-spacing="-4">刺さる。</text>
+    <text x="80" y="465" fill="#b7becf" font-size="28" font-weight="500">匿名 × 50字 × リアルタイム地図SNS</text>
     <g transform="translate(80,560)">
-      <g transform="translate(0,-22)">
-        <path d="M16 0C7 0 0 7 0 16c0 12 16 28 16 28s16-16 16-28C32 7 25 0 16 0z" fill="#ff2e6d"/>
-        <circle cx="16" cy="16" r="6" fill="#fff"/>
-      </g>
-      <text x="46" y="0" fill="#f3f5fb" font-size="24" font-weight="700">Pinly</text>
-      <text x="120" y="0" fill="#6b7390" font-size="20" font-weight="500">— pinly.app</text>
+      <path d="M0 -30C-10 -30 -18 -22 -18 -12c0 13 18 28 18 28s18-15 18-28C18 -22 10 -30 0 -30z" fill="url(#pin)"/>
+      <circle cx="0" cy="-12" r="6" fill="#fff"/>
+      <text x="32" y="-2" fill="#f3f5fb" font-size="32" font-weight="800" letter-spacing="2">Pinly</text>
     </g>
   </g>
 </svg>

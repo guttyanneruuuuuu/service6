@@ -142,12 +142,11 @@ function initUI() {
   document.getElementById('locateBtn').addEventListener('click', locateMe);
 
   // New pin (FAB + appbar +)
-  const enterCompose = () => enterTargetingMode();
-  document.getElementById('newPinBtn').addEventListener('click', enterCompose);
-  document.getElementById('fab').addEventListener('click', enterCompose);
+  document.getElementById('newPinBtn').addEventListener('click', enterTargetingMode);
+  const fab = document.getElementById('fab');
+  fab.onclick = enterTargetingMode;
 
   // Compose sheet
-  const composeSheet = document.getElementById('composeSheet');
   document.querySelectorAll('[data-close-compose]').forEach((el) => el.addEventListener('click', closeCompose));
   const composeText = document.getElementById('composeText');
   const composeCount = document.getElementById('composeCount');
@@ -166,7 +165,6 @@ function initUI() {
     const b = document.createElement('button');
     b.className = 'compose__cat' + (c.id === STATE.composeCat ? ' active' : '');
     b.dataset.cat = c.id;
-    b.style.setProperty('--cat', c.color);
     b.innerHTML = `<span style="font-size:14px">${c.emoji}</span><span>${c.label}</span>`;
     b.addEventListener('click', () => {
       STATE.composeCat = c.id;
@@ -264,9 +262,7 @@ function enterTargetingMode() {
   STATE.composeTargetingMode = true;
   document.getElementById('targetCross').hidden = false;
   document.getElementById('fab').classList.add('is-targeting');
-  showToast('地図を動かして場所を合わせ、タップで決定');
-  // Tap-to-decide via center: clicking the FAB confirms
-  // Re-bind FAB to confirm in targeting mode
+  showToast('地図を動かして場所を合わせ、ボタンで決定');
   const fab = document.getElementById('fab');
   fab.onclick = confirmTarget;
 }
@@ -296,7 +292,6 @@ async function openCompose() {
   document.getElementById('composeCount').classList.remove('warn', 'over');
   setTimeout(() => document.getElementById('composeText').focus(), 200);
 
-  // Try a reverse-geocode to show a friendly location
   const [lng, lat] = STATE.composeLngLat || [STATE.map.getCenter().lng, STATE.map.getCenter().lat];
   document.getElementById('composeLoc').textContent =
     `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)} （タップ位置）`;
@@ -307,7 +302,6 @@ async function openCompose() {
 
 function closeCompose() {
   document.getElementById('composeSheet').hidden = true;
-  // Re-arm FAB to enter targeting next time
   const fab = document.getElementById('fab');
   fab.onclick = enterTargetingMode;
 }
@@ -333,7 +327,6 @@ function openDetail(id) {
   STATE.selectedPinId = id;
   renderDetail(p);
   document.getElementById('detail').hidden = false;
-  // Update URL share-state
   const url = new URL(location.href);
   url.searchParams.set('pin', id);
   history.replaceState(null, '', url.toString());
@@ -488,7 +481,6 @@ function placeUserMarker() {
 
 /* ---------------- Geocoding ---------------- */
 async function tryGeocode(q) {
-  // Use Nominatim's free public API (low rate limit, OK for sparse user use)
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
     const r = await fetch(url, { headers: { 'Accept-Language': 'ja' } });
@@ -513,7 +505,6 @@ async function reverseGeocode(lat, lng) {
     if (!r.ok) return null;
     const j = await r.json();
     if (j && j.display_name) {
-      // Use the most local part for clarity
       return j.name || j.display_name.split(',').slice(0, 2).join(', ');
     }
   } catch {}
@@ -525,7 +516,7 @@ function applyURLState() {
   const u = new URL(location.href);
   const pinId = u.searchParams.get('pin');
   const q = u.searchParams.get('q');
-  const center = u.searchParams.get('c');   // "lat,lng,zoom"
+  const center = u.searchParams.get('c');
   if (center) {
     const [lat, lng, zoom] = center.split(',').map(Number);
     if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
