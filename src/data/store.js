@@ -32,6 +32,7 @@ import {
   updatePinInSupabase,
   deletePinFromSupabase,
   subscribeToSupabasePins,
+  broadcastPinChange,
 } from './supabase.js';
 
 const LS_KEY    = 'pinly.pins.v2';
@@ -302,6 +303,8 @@ export class PinStore extends EventTarget {
       // strip the leading underscore-prefixed local fields before sending
       const { _reported, _reportCount, _hidden, myReactions, ...remote } = pin;
       insertPinToSupabase(remote).catch(() => {});
+      // Broadcast to other connected clients for instant sync
+      broadcastPinChange('INSERT', remote);
     }
 
     this._emit('add', pin);
@@ -329,6 +332,8 @@ export class PinStore extends EventTarget {
 
     if (this.supabase) {
       updatePinInSupabase(id, { reactions: p.reactions }).catch(() => {});
+      // Broadcast reaction update to other clients
+      broadcastPinChange('UPDATE', { id, reactions: p.reactions });
     }
     this._emit('update', p);
     this._broadcast({ t: 'update', pin: p });

@@ -18,6 +18,8 @@ const STORAGE_KEY = 'pinly.supabase.config';
 
 let supabaseClient = null;
 let activeChannel = null;
+let reconnectTimer = null;
+const RECONNECT_INTERVAL = 5000; // 5 seconds
 
 /** Validate URL is a legitimate Supabase https endpoint. */
 function isValidSupabaseUrl(url) {
@@ -144,24 +146,79 @@ export async function deletePinFromSupabase(id) {
   }
 }
 
+// Attempt to reconnect if subscription is lost
+function attemptReconnect(callback) {
+  if (reconnectTimer) clearTimeout(reconnectTimer);
+  reconnectTimer = setTimeout(() => {
+    console.log('[Pinly] Attempting to reconnect to Realtime...');
+    subscribeToSupabasePins(callback);
+  }, RECONNECT_INTERVAL);
+}
+
 export function subscribeToSupabasePins(callback) {
   if (!supabaseClient) return null;
   if (activeChannel) {
     try { supabaseClient.removeChannel(activeChannel); } catch {}
   }
+  
+  // Hybrid approach: Use Broadcast for guaranteed delivery + Postgres changes as fallback
   activeChannel = supabaseClient
-    .channel('pins-realtime')
+    .channel('pins-sync', {
+      config: {
+        broadcast: { self: true },
+      },
+    })
+    // Broadcast mode: Direct peer-to-peer (not affected by RLS)
+    .on('broadcast', { event: 'pin_change' }, (payload) => {
+      try { 
+        callback(payload.payload); 
+      } catch (err) { 
+        console.warn('[Pinly] broadcast cb failed:', err?.message || err); 
+      }
+    })
+    // Fallback: Postgres changes (for initial load and DB-level updates)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'pins' }, (payload) => {
-      try { callback(payload); } catch (err) { console.warn('[Pinly] realtime cb failed:', err?.message || err); }
+      try { 
+        callback(payload); 
+      } catch (err) { 
+        console.warn('[Pinly] postgres_changes cb failed:', err?.message || err); 
+      }
     })
     .on('subscribe', () => {
-      console.log('[Pinly] Realtime subscribed successfully');
+      console.log('[Pinly] Realtime subscribed successfully (Broadcast + Postgres)');
+      if (reconnectTimer) clearTimeout(reconnectTimer);
     })
     .on('error', (err) => {
       console.warn('[Pinly] Realtime subscription error:', err?.message || err);
+      attemptReconnect(callback);
     })
     .subscribe((status) => {
       console.log('[Pinly] Realtime subscription status:', status);
+      if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+        attemptReconnect(callback);
+      }
     });
+  
   return activeChannel;
+}
+
+// Broadcast a pin change to all connected clients
+export function broadcastPinChange(eventType, pin) {
+  if (!supabaseClient || !activeChannel) return false;
+  try {
+    activeChannel.send({
+      type: 'broadcast',
+      event: 'pin_change',
+      payload: {
+        eventType,
+        new: pin,
+        old: null,
+      },
+    });
+    console.log('[Pinly] Broadcasted:', eventType, pin.id);
+    return true;
+  } catch (err) {
+    console.warn('[Pinly] broadcast failed:', err?.message || err);
+    return false;
+  }
 }
