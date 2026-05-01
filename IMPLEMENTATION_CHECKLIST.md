@@ -31,8 +31,8 @@
 ### 1. バックエンド永続化（最優先）
 - [ ] Supabaseプロジェクトを作成
 - [ ] テーブルスキーマを作成（`SUPABASE_SETUP.md` 参照）
-- [ ] `src/data/supabase.js` を統合
-- [ ] `src/data/store.js` にSupabase同期ロジックを追加
+- [x] `src/data/supabase.js` を統合
+- [x] `src/data/store.js` にSupabase同期ロジックを追加
 - [ ] 複数デバイスからのアクセステスト
 
 ### 2. AIモデレーション（推奨）
