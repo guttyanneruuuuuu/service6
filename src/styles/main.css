@@ -17,6 +17,7 @@
   --bg-grad: radial-gradient(at 12% 8%, #ffd6ec 0%, transparent 55%),
              radial-gradient(at 88% 92%, #d6f0ff 0%, transparent 55%),
              radial-gradient(at 50% 60%, #fff8d6 0%, transparent 65%),
+             radial-gradient(at 30% 90%, #e8d6ff 0%, transparent 60%),
              linear-gradient(135deg, #fff5fb 0%, #ffe4ee 100%);
   --bg-panel: rgba(255, 255, 255, 0.78);
   --bg-panel-strong: rgba(255, 255, 255, 0.94);
@@ -355,6 +356,10 @@ button, input, textarea, select { font-family: inherit; color: inherit; }
 
 /* ============== MARKERS ============== */
 .pinly-marker { z-index: 10; cursor: pointer; will-change: transform; }
+.pinly-marker:focus-visible { outline: none; }
+.pinly-marker:focus-visible .pinly-marker__pin {
+  filter: drop-shadow(0 0 0 3px var(--pink)) drop-shadow(0 0 14px rgba(255,31,109,.5));
+}
 .pinly-marker__inner {
   display: flex; flex-direction: column; align-items: center;
   filter: drop-shadow(0 6px 14px rgba(0,0,0,0.22));
@@ -474,12 +479,13 @@ button, input, textarea, select { font-family: inherit; color: inherit; }
 .fab {
   position: fixed; right: max(18px, var(--safe-right));
   bottom: calc(112px + var(--safe-bottom));
-  width: 68px; height: 68px; border-radius: 50%;
+  width: 72px; height: 72px; border-radius: 50%;
   background: var(--gradient-brand-strong);
   color: #fff; border: 4px solid #fff; cursor: pointer;
   display: grid; place-items: center;
   box-shadow: 0 14px 32px rgba(255, 31, 109, 0.50),
               0 4px 10px rgba(255, 31, 109, 0.30),
+              0 0 0 1px rgba(255, 31, 109, 0.18),
               var(--shadow-inset);
   z-index: 100; transition: all var(--dur-slow) var(--ease-spring);
 }
@@ -489,8 +495,13 @@ button, input, textarea, select { font-family: inherit; color: inherit; }
   opacity: .35; z-index: -1;
   animation: fabHalo 2.6s infinite ease-out;
 }
-.fab:hover { transform: scale(1.1) rotate(45deg); box-shadow: 0 18px 40px rgba(255, 31, 109, 0.6); }
-.fab:active { transform: scale(.94); }
+.fab::after {
+  content: ""; position: absolute; inset: 4px; border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 50%);
+  pointer-events: none;
+}
+.fab:hover { transform: scale(1.1) rotate(90deg); box-shadow: 0 22px 44px rgba(255, 31, 109, 0.6), 0 0 0 8px rgba(255, 91, 148, 0.12); }
+.fab:active { transform: scale(.92); }
 .fab .fab__check { display: none; }
 .fab.is-targeting {
   background: linear-gradient(135deg, #2cc8df 0%, #4dd0e1 100%);
@@ -574,13 +585,22 @@ button, input, textarea, select { font-family: inherit; color: inherit; }
 
 .strip__btn {
   background: var(--gradient-brand-strong); color: #fff; border: none;
-  padding: 6px 14px; border-radius: var(--radius-pill);
+  padding: 7px 15px; border-radius: var(--radius-pill);
   font-size: 12px; font-weight: 900; cursor: pointer;
   transition: all var(--dur) var(--ease-spring);
-  box-shadow: 0 4px 10px rgba(255, 31, 109, 0.30);
+  box-shadow: 0 4px 10px rgba(255, 31, 109, 0.32), inset 0 1px 0 rgba(255,255,255,0.3);
   letter-spacing: .02em;
+  position: relative;
+  overflow: hidden;
 }
-.strip__btn--blue { background: var(--gradient-cool); box-shadow: 0 4px 10px rgba(77, 208, 225, 0.36); }
+.strip__btn::before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform .6s var(--ease);
+}
+.strip__btn:hover::before { transform: translateX(100%); }
+.strip__btn--blue { background: var(--gradient-cool); box-shadow: 0 4px 10px rgba(77, 208, 225, 0.36), inset 0 1px 0 rgba(255,255,255,0.3); }
 .strip__btn:hover { transform: translateY(-2px) scale(1.05); filter: brightness(1.08); }
 .strip__btn:active { transform: scale(.96); }
 
@@ -1139,3 +1159,95 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, select:focu
 }
 
 [hidden] { display: none !important; }
+
+/* ============== POLISH v3.1 — Final touches ============== */
+/* Marker hover: subtle 3D lift */
+.pin-marker {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.pin-marker:hover {
+  transform: translateY(-3px) scale(1.06);
+  filter: drop-shadow(0 6px 12px rgba(255, 91, 148, 0.35));
+}
+
+/* FAB pulse ring (decorative, not blocking) */
+.fab::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 91, 148, 0.35), transparent 70%);
+  opacity: 0;
+  animation: fab-pulse 2.6s ease-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+@keyframes fab-pulse {
+  0%   { opacity: 0; transform: scale(0.85); }
+  50%  { opacity: 0.55; transform: scale(1.15); }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+
+/* Button ripple effect */
+.btn, .iconbtn {
+  position: relative;
+  overflow: hidden;
+}
+.btn::after, .iconbtn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at var(--rx, 50%) var(--ry, 50%),
+              rgba(255, 255, 255, 0.5) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.btn:active::after, .iconbtn:active::after {
+  opacity: 1;
+  transition: opacity 0s;
+}
+
+/* Focus visible — accessibility */
+:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Smooth scroll & better text rendering */
+html { scroll-behavior: smooth; }
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(255, 91, 148, 0.35);
+  color: inherit;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #ff8fb8, #ff5b94);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #ff7aa8, #ff4685);
+  background-clip: padding-box;
+}
+
+/* Print: hide interactive UI */
+@media print {
+  .appbar, .catbar, .fab, .strip, .side-panel, .menu, .sheet, .detail, .intro {
+    display: none !important;
+  }
+}

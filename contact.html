@@ -3,62 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ff1f6d" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14101e" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
   <title>お問い合わせ — Pinly</title>
   <meta name="robots" content="noindex">
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-  <style>
-    :root { --pink:#ff6b9d; --text:#4a2c40; --text-dim:#7d5a71; --line:rgba(255,107,157,.15); }
-    *{box-sizing:border-box}
-    body{margin:0;padding:0;background:#fdf6ff;color:var(--text);font-family:"Noto Sans JP","Inter",system-ui,sans-serif;line-height:1.8;-webkit-font-smoothing:antialiased}
-    .container{max-width:680px;margin:0 auto;padding:48px 24px 96px}
-    h1{color:var(--pink);font-size:32px;font-weight:900;margin:0 0 8px;letter-spacing:-.02em}
-    .lead{color:var(--text-dim);font-size:14px;margin:0 0 32px}
-    h2{font-size:18px;font-weight:800;margin:32px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--line)}
-    p,li{font-size:15px}
-    .card{background:#fff;border:2px solid var(--line);border-radius:24px;padding:24px;margin:16px 0;box-shadow:0 8px 20px rgba(255,107,157,.08)}
-    .card h3{margin:0 0 8px;font-size:16px}
-    .card p{margin:0;color:var(--text-dim);font-size:14px}
-    .back{display:inline-flex;align-items:center;gap:6px;color:var(--pink);text-decoration:none;font-weight:800;margin-bottom:24px}
-    .back:hover{text-decoration:underline}
-    .form{background:#fff;border:2px solid var(--line);border-radius:24px;padding:28px;margin-top:16px}
-    label{display:block;font-weight:800;font-size:13px;margin:12px 0 6px}
-    input,textarea,select{width:100%;border:2px solid var(--line);border-radius:14px;padding:12px 14px;font-size:15px;font-family:inherit;background:#fdf6ff;color:var(--text)}
-    input:focus,textarea:focus,select:focus{outline:none;border-color:var(--pink);background:#fff}
-    textarea{min-height:120px;resize:vertical}
-    .btn{margin-top:16px;width:100%;padding:14px;background:var(--pink);color:#fff;border:none;border-radius:100px;font-weight:900;font-size:16px;cursor:pointer;transition:transform .2s}
-    .btn:hover{transform:translateY(-2px)}
-    .alert{margin-top:12px;padding:10px 14px;border-radius:14px;font-size:13px;font-weight:700}
-    .alert--ok{background:#d1f7e2;color:#1f7a44}
-    .alert--err{background:#fde4ea;color:#a31839}
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Noto+Sans+JP:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./page.css">
 </head>
 <body>
-  <div class="container">
-    <a href="./" class="back">← 地図に戻る</a>
-    <h1>お問い合わせ</h1>
-    <p class="lead">不適切な投稿の通報、削除依頼、ご意見・ご要望はこちらから</p>
+  <main class="page">
+    <a href="./" class="page__back">← 地図に戻る</a>
+
+    <section class="page__hero">
+      <h1>お問い合わせ</h1>
+      <p class="lead">不適切な投稿の通報、削除依頼、ご意見・ご要望はこちらから</p>
+    </section>
 
     <h2>よくある相談</h2>
-
-    <div class="card">
-      <h3>🚨 不適切な投稿を見つけた</h3>
-      <p>地図上のピンをタップして「この投稿を報告する」ボタンから報告すると、即座に非表示になります。緊急性が高い場合は下記フォームからもご連絡ください。</p>
-    </div>
-
-    <div class="card">
-      <h3>🗑️ 自分の投稿を削除したい</h3>
-      <p>匿名のため自動削除機能はありません。下記フォームに対象ピンの内容と投稿日時をできるだけ詳しくお書きの上、削除依頼をお送りください。</p>
-    </div>
-
-    <div class="card">
-      <h3>💡 機能リクエスト・バグ報告</h3>
-      <p>「こんな機能が欲しい」「ここがおかしい」といったフィードバックを大歓迎しています。</p>
+    <div class="grid">
+      <div class="card">
+        <span class="emoji">🚨</span>
+        <h3>不適切な投稿を見つけた</h3>
+        <p>地図上のピンをタップして「この投稿を報告する」ボタンから報告すると、即座に非表示になります。緊急性が高い場合は下記フォームからもご連絡ください。</p>
+      </div>
+      <div class="card">
+        <span class="emoji">🗑️</span>
+        <h3>自分の投稿を削除したい</h3>
+        <p>同じ端末からなら、メニュー → 自分のピン一覧 → 🗑️ で削除できます。それ以外の場合は、対象ピンの内容と投稿日時をできるだけ詳しくお書きください。</p>
+      </div>
+      <div class="card">
+        <span class="emoji">💡</span>
+        <h3>機能リクエスト・バグ報告</h3>
+        <p>「こんな機能が欲しい」「ここがおかしい」といったフィードバックを大歓迎しています。GitHub の Issue でも受け付けています。</p>
+      </div>
+      <div class="card">
+        <span class="emoji">⚖️</span>
+        <h3>法的な申し立て</h3>
+        <p>権利侵害や法的なご相談は、種別「法的・権利侵害に関する申し立て」を選択し、できる限り詳細をお書きください。</p>
+      </div>
     </div>
 
     <h2>お問い合わせフォーム</h2>
-    <form id="contactForm" class="form" onsubmit="return submitForm(event)">
-      <label for="topic">お問い合わせ種別 <span style="color:var(--pink)">*</span></label>
-      <select id="topic" required>
+    <form id="contactForm" class="form" novalidate>
+      <label for="topic">お問い合わせ種別 <span class="req">*</span></label>
+      <select id="topic" name="topic" required>
         <option value="">選択してください</option>
         <option value="report">不適切な投稿の通報</option>
         <option value="delete">投稿の削除依頼</option>
@@ -69,50 +61,93 @@
       </select>
 
       <label for="email">返信用メールアドレス（任意）</label>
-      <input type="email" id="email" placeholder="reply@example.com">
+      <input type="email" id="email" name="email" placeholder="reply@example.com" autocomplete="email" maxlength="320">
 
-      <label for="message">お問い合わせ内容 <span style="color:var(--pink)">*</span></label>
-      <textarea id="message" required placeholder="できるだけ具体的にお書きください。投稿削除の場合は、投稿日時・場所・テキスト内容など"></textarea>
+      <label for="message">お問い合わせ内容 <span class="req">*</span></label>
+      <textarea id="message" name="message" required maxlength="2000" placeholder="できるだけ具体的にお書きください。投稿削除の場合は、投稿日時・場所・テキスト内容など"></textarea>
 
-      <button type="submit" class="btn">送信する ✉️</button>
-
-      <div id="alert"></div>
+      <button type="submit" class="btn btn--block" style="margin-top:18px">送信する ✉️</button>
+      <div id="alert" role="status" aria-live="polite"></div>
     </form>
 
-    <p style="margin-top:32px;font-size:13px;color:var(--text-dim);text-align:center">
+    <h2>その他の連絡手段</h2>
+    <div class="grid">
+      <div class="card">
+        <span class="emoji">🐙</span>
+        <h3>GitHub Issues</h3>
+        <p><a href="https://github.com/guttyanneruuuuuu/service6/issues" target="_blank" rel="noopener noreferrer">github.com/guttyanneruuuuuu/service6/issues</a> から技術的な不具合や機能要望をお寄せください。</p>
+      </div>
+      <div class="card">
+        <span class="emoji">📨</span>
+        <h3>メール</h3>
+        <p>メールクライアントが起動しない環境では、上記GitHub Issuesをご利用ください。</p>
+      </div>
+    </div>
+
+    <p style="margin-top:24px;font-size:13px;color:var(--text-dim);text-align:center">
       ※ 通常 3 営業日以内にご対応します。<br>
       ※ 緊急性の高い案件（脅迫・自殺予告等）は警察または地域の相談窓口にご連絡ください。
     </p>
-  </div>
+
+    <nav class="page__footnav" aria-label="フッター">
+      <a href="./">ホーム</a>
+      <a href="./about.html">Pinly とは</a>
+      <a href="./terms.html">利用規約</a>
+      <a href="./privacy.html">プライバシー</a>
+    </nav>
+  </main>
 
   <script>
-    function submitForm(e) {
-      e.preventDefault();
-      const topic = document.getElementById('topic').value;
-      const email = document.getElementById('email').value;
-      const message = document.getElementById('message').value;
-      const alertEl = document.getElementById('alert');
+    (function () {
+      var form = document.getElementById('contactForm');
+      var alertEl = document.getElementById('alert');
+      if (!form) return;
 
-      // フォームバックエンドが未設定なので mailto: で代替
-      const subject = encodeURIComponent('[Pinly] ' + (document.querySelector(`#topic option[value="${topic}"]`)?.textContent || ''));
-      const body = encodeURIComponent(
-        '【種別】' + topic + '\n' +
-        '【返信先】' + (email || '(未指定)') + '\n\n' +
-        '【内容】\n' + message + '\n\n' +
-        '---\nUser-Agent: ' + navigator.userAgent
-      );
+      function escapeText(s) {
+        return String(s == null ? '' : s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').slice(0, 4000);
+      }
+      function showAlert(html, kind) {
+        alertEl.innerHTML = '';
+        var d = document.createElement('div');
+        d.className = 'alert alert--' + (kind === 'err' ? 'err' : 'ok');
+        d.textContent = html;
+        alertEl.appendChild(d);
+      }
 
-      // ローカル保存（運営側で確認できるようストレージに残す）
-      try {
-        const list = JSON.parse(localStorage.getItem('pinly.contact.v1') || '[]');
-        list.push({ topic, email, message, ts: Date.now() });
-        localStorage.setItem('pinly.contact.v1', JSON.stringify(list.slice(-50)));
-      } catch {}
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var topic = document.getElementById('topic').value;
+        var email = escapeText(document.getElementById('email').value).trim();
+        var message = escapeText(document.getElementById('message').value).trim();
 
-      alertEl.innerHTML = '<div class="alert alert--ok">✅ お問い合わせフォームを開きました。メールクライアントが起動しなかった場合は、運営X (@PinlyApp) のDMからご連絡ください。</div>';
-      window.location.href = 'mailto:contact@pinly.app?subject=' + subject + '&body=' + body;
-      return false;
-    }
+        if (!topic) { showAlert('お問い合わせ種別を選択してください。', 'err'); return; }
+        if (message.length < 5) { showAlert('お問い合わせ内容をもう少し詳しく入力してください。', 'err'); return; }
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showAlert('返信用メールアドレスの形式が正しくありません。', 'err'); return; }
+
+        var topicLabel = (document.querySelector('#topic option[value="' + topic + '"]') || {}).textContent || topic;
+        var subject = encodeURIComponent('[Pinly] ' + topicLabel);
+        var body = encodeURIComponent(
+          '【種別】' + topicLabel + '\n' +
+          '【返信先】' + (email || '(未指定)') + '\n\n' +
+          '【内容】\n' + message + '\n\n' +
+          '---\nUser-Agent: ' + navigator.userAgent
+        );
+
+        try {
+          var list = JSON.parse(localStorage.getItem('pinly.contact.v1') || '[]');
+          list.push({ topic: topic, email: email, message: message, ts: Date.now() });
+          if (list.length > 50) list = list.slice(-50);
+          localStorage.setItem('pinly.contact.v1', JSON.stringify(list));
+        } catch (_) {}
+
+        showAlert('お問い合わせを受け付けました。メールクライアントが開きます。開かない場合は GitHub Issues からご連絡ください。', 'ok');
+        // Use a no-op fallback if mail client is unavailable
+        var a = document.createElement('a');
+        a.href = 'mailto:guttyanneruuuuuu@users.noreply.github.com?subject=' + subject + '&body=' + body;
+        a.rel = 'noopener noreferrer';
+        a.click();
+      });
+    })();
   </script>
 </body>
 </html>
