@@ -13,6 +13,40 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Noto+Sans+JP:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./page.css">
+  <style>
+    .form-notice {
+      background: linear-gradient(135deg, #fff5fa 0%, #ffe7f2 100%);
+      border-left: 4px solid #ff1f6d;
+      padding: 16px;
+      margin: 24px 0;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .form-notice strong {
+      color: #ff1f6d;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .google-form-wrapper {
+      margin: 24px 0;
+      padding: 20px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .google-form-wrapper iframe {
+      width: 100%;
+      height: 1200px;
+      border: none;
+      border-radius: 8px;
+    }
+    @media (max-width: 600px) {
+      .google-form-wrapper iframe {
+        height: 1400px;
+      }
+    }
+  </style>
 </head>
 <body>
   <main class="page">
@@ -48,27 +82,20 @@
     </div>
 
     <h2>お問い合わせフォーム</h2>
-    <form id="contactForm" class="form" novalidate>
-      <label for="topic">お問い合わせ種別 <span class="req">*</span></label>
-      <select id="topic" name="topic" required>
-        <option value="">選択してください</option>
-        <option value="report">不適切な投稿の通報</option>
-        <option value="delete">投稿の削除依頼</option>
-        <option value="bug">バグ報告</option>
-        <option value="feature">機能リクエスト</option>
-        <option value="legal">法的・権利侵害に関する申し立て</option>
-        <option value="other">その他</option>
-      </select>
+    
+    <div class="form-notice">
+      <strong>📝 Google フォームで受け付けています</strong>
+      以下のフォームにご記入いただくと、あなたのご意見がPinlyチームに直接届きます。<br>
+      通常 3 営業日以内にご対応いたします。
+    </div>
 
-      <label for="email">返信用メールアドレス（任意）</label>
-      <input type="email" id="email" name="email" placeholder="reply@example.com" autocomplete="email" maxlength="320">
-
-      <label for="message">お問い合わせ内容 <span class="req">*</span></label>
-      <textarea id="message" name="message" required maxlength="2000" placeholder="できるだけ具体的にお書きください。投稿削除の場合は、投稿日時・場所・テキスト内容など"></textarea>
-
-      <button type="submit" class="btn btn--block" style="margin-top:18px">送信する ✉️</button>
-      <div id="alert" role="status" aria-live="polite"></div>
-    </form>
+    <!-- Google Form Embed Placeholder -->
+    <div class="google-form-wrapper" id="formContainer">
+      <p style="text-align: center; color: var(--text-dim); padding: 40px 20px;">
+        フォームを読み込み中です…<br>
+        <small>（フォームが表示されない場合は、下記の「その他の連絡手段」からお問い合わせください）</small>
+      </p>
+    </div>
 
     <h2>その他の連絡手段</h2>
     <div class="grid">
@@ -80,7 +107,7 @@
       <div class="card">
         <span class="emoji">📨</span>
         <h3>メール</h3>
-        <p>メールクライアントが起動しない環境では、上記GitHub Issuesをご利用ください。</p>
+        <p>フォームが利用できない場合は、GitHub Issues をご利用ください。</p>
       </div>
     </div>
 
@@ -98,56 +125,47 @@
   </main>
 
   <script>
-    (function () {
-      var form = document.getElementById('contactForm');
-      var alertEl = document.getElementById('alert');
-      if (!form) return;
-
-      function escapeText(s) {
-        return String(s == null ? '' : s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').slice(0, 4000);
+    // Google フォーム埋め込みスクリプト
+    // 使用方法:
+    // 1. Google フォームを作成する
+    // 2. 「送信」ボタン → リンク アイコン → 「<> 埋め込む」を選択
+    // 3. 生成されたコードから iframe の src を取得
+    // 4. 以下の GOOGLE_FORM_EMBED_URL に貼り付ける
+    
+    const GOOGLE_FORM_EMBED_URL = 'PLACEHOLDER_GOOGLE_FORM_URL';
+    
+    function loadGoogleForm() {
+      const container = document.getElementById('formContainer');
+      if (!container) return;
+      
+      if (GOOGLE_FORM_EMBED_URL === 'PLACEHOLDER_GOOGLE_FORM_URL') {
+        container.innerHTML = `
+          <div style="padding: 40px 20px; text-align: center; color: var(--text-dim);">
+            <p style="margin-bottom: 16px;">📋 Google フォームはまだ設定されていません</p>
+            <p style="font-size: 13px; line-height: 1.6;">
+              管理者が Google フォームを作成・設定するまで、<br>
+              <a href="https://github.com/guttyanneruuuuuu/service6/issues" target="_blank" rel="noopener noreferrer">GitHub Issues</a> からお問い合わせください。
+            </p>
+          </div>
+        `;
+        return;
       }
-      function showAlert(html, kind) {
-        alertEl.innerHTML = '';
-        var d = document.createElement('div');
-        d.className = 'alert alert--' + (kind === 'err' ? 'err' : 'ok');
-        d.textContent = html;
-        alertEl.appendChild(d);
-      }
-
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        var topic = document.getElementById('topic').value;
-        var email = escapeText(document.getElementById('email').value).trim();
-        var message = escapeText(document.getElementById('message').value).trim();
-
-        if (!topic) { showAlert('お問い合わせ種別を選択してください。', 'err'); return; }
-        if (message.length < 5) { showAlert('お問い合わせ内容をもう少し詳しく入力してください。', 'err'); return; }
-        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showAlert('返信用メールアドレスの形式が正しくありません。', 'err'); return; }
-
-        var topicLabel = (document.querySelector('#topic option[value="' + topic + '"]') || {}).textContent || topic;
-        var subject = encodeURIComponent('[Pinly] ' + topicLabel);
-        var body = encodeURIComponent(
-          '【種別】' + topicLabel + '\n' +
-          '【返信先】' + (email || '(未指定)') + '\n\n' +
-          '【内容】\n' + message + '\n\n' +
-          '---\nUser-Agent: ' + navigator.userAgent
-        );
-
-        try {
-          var list = JSON.parse(localStorage.getItem('pinly.contact.v1') || '[]');
-          list.push({ topic: topic, email: email, message: message, ts: Date.now() });
-          if (list.length > 50) list = list.slice(-50);
-          localStorage.setItem('pinly.contact.v1', JSON.stringify(list));
-        } catch (_) {}
-
-        showAlert('お問い合わせを受け付けました。メールクライアントが開きます。開かない場合は GitHub Issues からご連絡ください。', 'ok');
-        // Use a no-op fallback if mail client is unavailable
-        var a = document.createElement('a');
-        a.href = 'mailto:guttyanneruuuuuu@users.noreply.github.com?subject=' + subject + '&body=' + body;
-        a.rel = 'noopener noreferrer';
-        a.click();
-      });
-    })();
+      
+      const iframe = document.createElement('iframe');
+      iframe.src = GOOGLE_FORM_EMBED_URL;
+      iframe.title = 'Pinly お問い合わせフォーム';
+      iframe.setAttribute('loading', 'lazy');
+      
+      container.innerHTML = '';
+      container.appendChild(iframe);
+    }
+    
+    // ページ読み込み時にフォームを埋め込む
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadGoogleForm);
+    } else {
+      loadGoogleForm();
+    }
   </script>
 </body>
 </html>
