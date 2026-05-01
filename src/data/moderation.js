@@ -77,7 +77,7 @@ function normalize(text) {
  *   - reasons: string[] (machine-readable)
  *   - message: human-friendly reason
  */
-export function getModerationVerdict(rawText) {
+export async function getModerationVerdict(rawText, useServer = false) {
   const reasons = [];
 
   if (rawText == null || typeof rawText !== 'string') {
@@ -134,7 +134,7 @@ export function getModerationVerdict(rawText) {
     };
   }
 
-  // Warning patterns -> warn
+   // Warning patterns -> warn
   for (const p of WARNING_PATTERNS) {
     if (p.test(t)) {
       reasons.push('warn');
@@ -143,6 +143,28 @@ export function getModerationVerdict(rawText) {
         reasons,
         message: '⚠️ 不適切な可能性のある言葉が含まれています。本当に投稿しますか？',
       };
+    }
+  }
+
+  // Server-side AI Moderation (optional)
+  if (useServer) {
+    try {
+      const { getSupabase } = await import('./supabase.js');
+      const supabase = getSupabase();
+      if (supabase) {
+        const { data, error } = await supabase.functions.invoke('moderation', {
+          body: { text: trimmed }
+        });
+        if (!error && data && data.flagged) {
+          return {
+            status: 'rejected',
+            reasons: ['ai_flagged'],
+            message: '🚫 AI判定により不適切な内容と判断されました。',
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('[Pinly] Server moderation failed:', err);
     }
   }
 

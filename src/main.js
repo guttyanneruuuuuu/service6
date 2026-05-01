@@ -715,7 +715,7 @@ async function submitPin() {
   const text = textEl.value.trim();
 
   // Moderation
-  const verdict = getModerationVerdict(text);
+  const verdict = await getModerationVerdict(text, true);
   if (verdict.status === 'rejected') {
     showToast(verdict.message, 'err');
     return;

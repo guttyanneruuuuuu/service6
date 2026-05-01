@@ -1,22 +1,5 @@
-# Supabase セットアップガイド
-
-このガイドでは、Pinlyのデータを永続的に保存するためにSupabaseを設定する手順を説明します。
-
-## 1. Supabaseプロジェクトの作成
-
-1. [Supabase](https://supabase.com) にアクセスし、アカウントを作成またはログインします。
-2. 「New Project」をクリックして新しいプロジェクトを作成します。
-3. プロジェクト名を「pinly」などと設定し、パスワードを設定します。
-4. リージョンを選択し（日本の場合は「Tokyo」）、プロジェクトを作成します。
-
-## 2. データベーステーブルの作成
-
-プロジェクトが作成されたら、SQL Editorを使用して以下のテーブルを作成します。
-
-### SQL コマンド
-
 ```sql
--- Create pins table
+-- Create pins table (unchanged)
 CREATE TABLE pins (
   id TEXT PRIMARY KEY,
   lat FLOAT NOT NULL,
@@ -34,30 +17,55 @@ CREATE TABLE pins (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Create index for faster queries
+-- Create index for faster queries (unchanged)
 CREATE INDEX idx_pins_ts ON pins(ts DESC);
 CREATE INDEX idx_pins_cat ON pins(cat);
 CREATE INDEX idx_pins_author ON pins(author);
 CREATE INDEX idx_pins_location ON pins(lat, lng);
 
--- Enable Row Level Security (RLS)
+-- Enable Row Level Security (RLS) (unchanged)
 ALTER TABLE pins ENABLE ROW LEVEL SECURITY;
 
--- Create policy to allow anonymous reads
-CREATE POLICY "Allow anonymous read" ON pins
+-- Revised RLS Policies
+
+-- Allow all users (anonymous or authenticated) to read pins
+DROP POLICY IF EXISTS "Allow anonymous read" ON pins;
+CREATE POLICY "Allow all reads" ON pins
   FOR SELECT USING (true);
 
--- Create policy to allow anonymous inserts
-CREATE POLICY "Allow anonymous insert" ON pins
-  FOR INSERT WITH CHECK (true);
+-- Allow authenticated users to insert pins, with basic validation
+-- For anonymous users, the 'author' field is client-generated (u_xxxx). 
+-- We assume 'author' is set to the client-generated ID for anonymous posts.
+-- This policy prevents authenticated users from spoofing other authors.
+DROP POLICY IF EXISTS "Allow anonymous insert" ON pins;
+CREATE POLICY "Allow authenticated inserts with author match" ON pins
+  FOR INSERT WITH CHECK (
+    (auth.uid() IS NOT NULL AND author = auth.uid()::text) OR
+    (auth.uid() IS NULL AND author ~ '^u_[a-z0-9_-]{4,32}$' AND LENGTH(text) <= 50 AND LENGTH(text) > 0)
+  );
 
--- Create policy to allow updates
-CREATE POLICY "Allow anonymous update" ON pins
-  FOR UPDATE USING (true) WITH CHECK (true);
+-- Allow authenticated users to update their own pins, with basic validation
+DROP POLICY IF EXISTS "Allow anonymous update" ON pins;
+CREATE POLICY "Allow authenticated updates to own pins" ON pins
+  FOR UPDATE USING (
+    (auth.uid() IS NOT NULL AND author = auth.uid()::text) OR
+    (auth.uid() IS NULL AND author ~ '^u_[a-z0-9_-]{4,32}$' AND LENGTH(text) <= 50 AND LENGTH(text) > 0)
+  ) WITH CHECK (
+    (auth.uid() IS NOT NULL AND author = auth.uid()::text) OR
+    (auth.uid() IS NULL AND author ~ '^u_[a-z0-9_-]{4,32}$' AND LENGTH(text) <= 50 AND LENGTH(text) > 0)
+  );
 
--- Create policy to allow deletes
-CREATE POLICY "Allow anonymous delete" ON pins
-  FOR DELETE USING (true);
+-- Allow authenticated users to delete their own pins
+DROP POLICY IF EXISTS "Allow anonymous delete" ON pins;
+CREATE POLICY "Allow authenticated deletes to own pins" ON pins
+  FOR DELETE USING (
+    (auth.uid() IS NOT NULL AND author = auth.uid()::text) OR
+    (auth.uid() IS NULL AND author ~ '^u_[a-z0-9_-]{4,32}$')
+  );
+
+-- Prevent direct modification of internal fields by users
+-- This is a more advanced RLS, often handled by triggers or backend logic.
+-- For now, we'll focus on the above, as direct RLS for specific column updates can be complex.
 ```
 
 ## 3. APIキーの取得
