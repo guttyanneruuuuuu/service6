@@ -217,7 +217,12 @@ export class PinStore extends EventTarget {
 
   filter({ cat = 'all', q = '' } = {}) {
     const ql = q.trim().toLowerCase();
+    const now = Math.floor(Date.now() / 1000);
+    const EXPIRE_SEC = 48 * 3600; // 48 hours
+
     return this.list().filter((p) => {
+      if (p._reported) return false; // Hide reported pins
+      if (now - p.ts > EXPIRE_SEC && !p.official) return false; // Hide expired pins (except official)
       if (cat !== 'all' && p.cat !== cat) return false;
       if (!ql) return true;
       return (

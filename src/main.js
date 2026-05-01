@@ -160,6 +160,16 @@ function initUI() {
 
   // Detail
   document.querySelectorAll('[data-close-detail]').forEach((el) => el.addEventListener('click', closeDetail));
+  const reportBtn = document.getElementById('reportPin');
+  if (reportBtn) {
+    reportBtn.onclick = () => {
+      if (confirm('この投稿を不適切なコンテンツとして報告しますか？')) {
+        STATE.store.report(STATE.selectedPinId);
+        showToast('報告ありがとうございます。運営が確認いたします。');
+        closeDetail();
+      }
+    };
+  }
 
   // Intro
   const introGo = document.getElementById('introGo');
@@ -301,6 +311,10 @@ function closeCompose() {
 async function submitPin() {
   const text = document.getElementById('composeText').value.trim();
   if (!text) return;
+
+  if (!confirm('この内容で投稿しますか？\n※誹謗中傷や個人を特定する情報は禁止されています。')) {
+    return;
+  }
   
   // Simple keyword-based category suggestion
   let cat = STATE.composeCat;
@@ -382,6 +396,12 @@ function shareToLine() {
 /* ---------------- Actions ---------------- */
 function locateMe() {
   if (!navigator.geolocation) return;
+  
+  // Explain why we need location
+  if (!confirm('現在地周辺のピンを表示し、投稿しやすくするために位置情報を取得します。位置情報は追跡には使用されません。許可しますか？')) {
+    return;
+  }
+
   navigator.geolocation.getCurrentPosition((pos) => {
     const { longitude, latitude } = pos.coords;
     STATE.map.flyTo({ center: [longitude, latitude], zoom: 15 });
