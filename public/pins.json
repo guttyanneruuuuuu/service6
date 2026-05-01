@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "pins": [
+    { "id": "seed-001", "lat": 35.6595, "lng": 139.7005, "cat": "fun",  "text": "右の信号、青が異常に短い。3秒で渡れる人だけが渡れる。", "ts": 1745212345, "loc": "渋谷スクランブル交差点", "reactions": { "🔥": 42, "💯": 18, "😂": 12 } },
+    { "id": "seed-002", "lat": 35.6896, "lng": 139.7006, "cat": "spot", "text": "西口の喫煙所裏、夜8時以降は意外と静か。", "ts": 1745218900, "loc": "新宿駅西口", "reactions": { "🔥": 23, "✨": 8 } },
+    { "id": "seed-003", "lat": 35.6586, "lng": 139.7454, "cat": "food", "text": "三田製麺所、平日13時過ぎは並ばずに座れる説。", "ts": 1745225100, "loc": "六本木", "reactions": { "🍜": 31, "🔥": 11 } },
+    { "id": "seed-004", "lat": 35.7100, "lng": 139.8107, "cat": "warn", "text": "出口B3、夕方この時間は風がやばい。傘ぶっ壊れる。", "ts": 1745230000, "loc": "押上駅", "reactions": { "⚠️": 19, "💯": 6 } },
+    { "id": "seed-005", "lat": 34.9671, "lng": 135.7727, "cat": "spot", "text": "千本鳥居、5時前なら誰もいない。空気変わる。", "ts": 1745198400, "loc": "伏見稲荷", "reactions": { "✨": 88, "🔥": 32, "💯": 14 } },
+    { "id": "seed-006", "lat": 35.0116, "lng": 135.7681, "cat": "life", "text": "鴨川沿い、ここの段差が等間隔の理由を地元民でも知らない。", "ts": 1745189000, "loc": "京都・鴨川", "reactions": { "🤔": 14, "✨": 7 } },
+    { "id": "seed-007", "lat": 34.7024, "lng": 135.4959, "cat": "food", "text": "551、昼の臭い対策で出張帰りの新幹線禁止令出てる会社実在する。", "ts": 1745175200, "loc": "大阪・梅田", "reactions": { "😂": 67, "🔥": 21, "💯": 9 } },
+    { "id": "seed-008", "lat": 34.6937, "lng": 135.5023, "cat": "fun",  "text": "グリコの看板の前、ジャンプ写真で時計合わせる観光客が今日もいる。", "ts": 1745169000, "loc": "道頓堀", "reactions": { "😂": 33, "✨": 12 } },
+    { "id": "seed-009", "lat": 35.1815, "lng": 136.9066, "cat": "food", "text": "矢場とん本店、開店15分前から並ぶのが常識化してる。", "ts": 1745158800, "loc": "名古屋", "reactions": { "🍜": 24, "💯": 8 } },
+    { "id": "seed-010", "lat": 43.0686, "lng": 141.3506, "cat": "spot", "text": "二条市場の隅、観光客が見落とす朝6時の海鮮丼が異次元。", "ts": 1745145000, "loc": "札幌", "reactions": { "✨": 41, "🍜": 18 } },
+    { "id": "seed-011", "lat": 33.5904, "lng": 130.4017, "cat": "fun",  "text": "屋台のおっちゃん、客見て勝手に注文決める方式まだ健在。", "ts": 1745130000, "loc": "博多", "reactions": { "😂": 28, "🔥": 9 } },
+    { "id": "seed-012", "lat": 26.2124, "lng": 127.6809, "cat": "life", "text": "国際通りの脇道、地元の人しか入らない食堂が無限にある。", "ts": 1745115000, "loc": "那覇", "reactions": { "✨": 22, "🍜": 14 } },
+    { "id": "seed-013", "lat": 40.7580, "lng": -73.9855, "cat": "warn", "text": "this corner has the worst tourist photographers. avoid 10-11am.", "ts": 1745109000, "loc": "Times Square, NYC", "reactions": { "⚠️": 12, "💯": 5 } },
+    { "id": "seed-014", "lat": 48.8584, "lng": 2.2945,   "cat": "fun",  "text": "the tower lights up exactly on the hour. tourists never know.", "ts": 1745098000, "loc": "Eiffel Tower, Paris", "reactions": { "✨": 36, "🔥": 14 } },
+    { "id": "seed-015", "lat": 51.5007, "lng": -0.1246,  "cat": "life", "text": "the bench facing parliament is the best free seat in london.", "ts": 1745084000, "loc": "Westminster, London", "reactions": { "✨": 18 } },
+    { "id": "seed-016", "lat": 1.2839,  "lng": 103.8607, "cat": "food", "text": "marina bay food center, stall #14, the chili crab is unreal at 11pm.", "ts": 1745070000, "loc": "Singapore", "reactions": { "🍜": 22, "🔥": 11 } },
+    { "id": "seed-017", "lat": 35.6629, "lng": 139.7000, "cat": "spot", "text": "渋谷ストリームの橋の上、雨の日に虹が出やすい。", "ts": 1745062000, "loc": "渋谷", "reactions": { "✨": 27, "🔥": 8 } },
+    { "id": "seed-018", "lat": 35.6938, "lng": 139.7036, "cat": "food", "text": "歌舞伎町の路地、深夜2時の名前ない餃子屋が本物。", "ts": 1745052000, "loc": "新宿", "reactions": { "🍜": 19, "✨": 14 } },
+    { "id": "seed-019", "lat": 35.7100, "lng": 139.8107, "cat": "fun",  "text": "スカイツリー、雷の日に登ると逆に静かになるらしい。", "ts": 1745044000, "loc": "東京スカイツリー", "reactions": { "🤔": 23, "⚠️": 8 } },
+    { "id": "seed-020", "lat": 35.6580, "lng": 139.7016, "cat": "spot", "text": "渋谷109の裏、立ちんぼの猫が3匹常駐してる。優しい。", "ts": 1745030000, "loc": "渋谷", "reactions": { "✨": 41, "😂": 17 } }
+  ]
+}

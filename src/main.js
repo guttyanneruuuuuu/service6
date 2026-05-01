@@ -1,479 +1,581 @@
-import { ZeropointScene } from './scene/scene.js';
-import { ZeroRoom } from './net/room.js';
-import { PLACES, PLACE_TAGS, getPlace } from './data/places.js';
+import maplibregl from 'maplibre-gl';
+import { DARK_STYLE } from './map/style.js';
+import { MarkerLayer } from './map/markers.js';
+import { PinStore } from './data/store.js';
+import { CATEGORIES, CATS_FOR_COMPOSE, getCategory } from './data/categories.js';
 
-/* =========================================================
-   Zeropoint main controller
-   ========================================================= */
-
-const AVATAR_COLORS = [
-  '#7ce7ff', '#b794ff', '#ffd27c', '#ff9b7c',
-  '#9ffcb4', '#ffa4e3', '#7cc4ff', '#ffe56b',
-];
+/* ============================================================
+   Pinly main controller
+   ============================================================ */
 
 const STATE = {
-  self: loadSelf(),
-  currentPlaceId: null,
-  scene: null,
-  room: null,
-  posSendTimer: null,
+  map: null,
+  layer: null,
+  store: null,
+  filterCat: 'all',
+  searchQuery: '',
+  composeCat: 'spot',
+  composeTargetingMode: false,
+  composeLngLat: null,
+  selectedPinId: null,
+  userLocation: null,
+  userMarker: null,
 };
 
-function loadSelf() {
-  let s = {};
-  try { s = JSON.parse(localStorage.getItem('zeropoint.self') || '{}'); } catch {}
-  if (!s.id) s.id = 'user-' + Math.random().toString(36).slice(2, 10);
-  if (!s.color) s.color = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
-  return s;
-}
-function saveSelf() {
-  try { localStorage.setItem('zeropoint.self', JSON.stringify(STATE.self)); } catch {}
-}
+/* ---------------- Boot ---------------- */
+async function boot() {
+  STATE.store = new PinStore();
+  await STATE.store.init();
 
-/* ---------- Boot ---------- */
-function boot() {
-  // Simulated boot sequence feel
-  const status = document.getElementById('bootStatus');
-  const lines = [
-    'initializing spacetime…',
-    'aligning quantum channels…',
-    'fetching doors…',
-    'ready.',
-  ];
-  let i = 0;
-  const int = setInterval(() => {
-    i = Math.min(i + 1, lines.length - 1);
-    if (status) status.textContent = lines[i];
-  }, 520);
+  initMap();
+  initUI();
+  initStoreEvents();
 
+  // Hide boot
   setTimeout(() => {
-    clearInterval(int);
-    const boot = document.getElementById('boot');
-    boot.classList.add('boot--hide');
-    setTimeout(() => { boot.hidden = true; }, 620);
-    document.getElementById('landing').hidden = false;
-    initLanding();
-    maybeAutoJoinFromURL();
-  }, 1800);
-}
+    const b = document.getElementById('boot');
+    b.classList.add('boot--hide');
+    setTimeout(() => { b.hidden = true; }, 500);
+  }, 900);
 
-/* ---------- Landing ---------- */
-function initLanding() {
-  // Hero background animated starfield (CSS-only fallback)
-  buildHeroBg();
-
-  renderPlacesGrid(document.getElementById('placesGrid'), PLACES.slice(0, 8));
-
-  document.getElementById('heroEnter').addEventListener('click', () => openPicker());
-  document.getElementById('navCta').addEventListener('click', () => openPicker());
-  document.getElementById('heroHow').addEventListener('click', () => {
-    document.getElementById('how').scrollIntoView({ behavior: 'smooth' });
-  });
-  document.getElementById('proCta').addEventListener('click', () => {
-    showToast('Waitlist joined. We\'ll email you when doors open.');
-  });
-
-  // Live-ish stats
-  document.getElementById('statPlaces').textContent = PLACES.length;
-  document.getElementById('statOnline').textContent = simulateOnlineCount();
-
-  // Picker wiring
-  initPicker();
-}
-
-function buildHeroBg() {
-  const host = document.getElementById('heroBg');
-  if (!host) return;
-  // CSS-generated starfield layer
-  const stars = document.createElement('div');
-  stars.style.position = 'absolute';
-  stars.style.inset = '0';
-  stars.style.background = `
-    radial-gradient(1px 1px at 10% 20%, #fff, transparent 60%),
-    radial-gradient(1px 1px at 80% 40%, #fff, transparent 60%),
-    radial-gradient(1.5px 1.5px at 30% 80%, #fff, transparent 60%),
-    radial-gradient(1px 1px at 60% 30%, #fff, transparent 60%),
-    radial-gradient(2px 2px at 45% 60%, #7ce7ff, transparent 60%),
-    radial-gradient(1.5px 1.5px at 25% 40%, #b794ff, transparent 60%),
-    radial-gradient(1px 1px at 90% 70%, #fff, transparent 60%),
-    radial-gradient(1.5px 1.5px at 70% 90%, #fff, transparent 60%)
-  `;
-  stars.style.backgroundSize = '600px 600px';
-  stars.style.opacity = '0.55';
-  stars.style.animation = 'starsDrift 80s linear infinite';
-  host.appendChild(stars);
-}
-
-function simulateOnlineCount() {
-  // Deterministic-ish, nice-looking fake number seeded by hour
-  const base = 37 + ((new Date().getHours() * 13) % 26);
-  return base + Math.floor(Math.random() * 8);
-}
-
-function renderPlacesGrid(host, places) {
-  host.innerHTML = '';
-  places.forEach((p) => {
-    const card = document.createElement('div');
-    card.className = 'place-card';
-    card.innerHTML = `
-      <div class="place-card__img" style="background-image:url('${p.thumb}')"></div>
-      <div class="place-card__overlay">
-        <div class="place-card__live">live · ${fakeOccupancy(p.id)}</div>
-        <div>
-          <h3 class="place-card__name">${escapeHTML(p.name)}</h3>
-          <div class="place-card__meta">
-            <span class="place-card__country">${escapeHTML(p.country)}</span>
-            <span>${p.tag.toUpperCase()}</span>
-          </div>
-        </div>
-      </div>
-      <div class="place-card__enter" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-      </div>
-    `;
-    card.addEventListener('click', () => requestEnter(p.id));
-    host.appendChild(card);
-  });
-}
-
-function fakeOccupancy(id) {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return (h % 24) + 1;
-}
-
-/* ---------- Picker ---------- */
-function initPicker() {
-  const filters = document.getElementById('pickerFilters');
-  const grid = document.getElementById('pickerGrid');
-  const search = document.getElementById('pickerSearch');
-  const picker = document.getElementById('picker');
-
-  // filters
-  filters.innerHTML = '';
-  let activeFilter = 'all';
-  PLACE_TAGS.forEach((t) => {
-    const b = document.createElement('button');
-    b.className = 'picker__filter' + (t.id === 'all' ? ' active' : '');
-    b.textContent = t.label;
-    b.addEventListener('click', () => {
-      activeFilter = t.id;
-      filters.querySelectorAll('.picker__filter').forEach((el) => el.classList.remove('active'));
-      b.classList.add('active');
-      rerender();
-    });
-    filters.appendChild(b);
-  });
-
-  const rerender = () => {
-    const q = (search.value || '').trim().toLowerCase();
-    const filtered = PLACES.filter((p) => {
-      if (activeFilter !== 'all' && p.tag !== activeFilter) return false;
-      if (!q) return true;
-      return (
-        p.name.toLowerCase().includes(q) ||
-        p.country.toLowerCase().includes(q) ||
-        p.tag.toLowerCase().includes(q)
-      );
-    });
-    renderPlacesGrid(grid, filtered);
-  };
-  search.addEventListener('input', rerender);
-  rerender();
-
-  picker.querySelectorAll('[data-close]').forEach((el) => {
-    el.addEventListener('click', () => closePicker());
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !picker.hidden) closePicker();
-  });
-}
-
-function openPicker() {
-  const picker = document.getElementById('picker');
-  picker.hidden = false;
-  document.body.style.overflow = 'hidden';
-}
-function closePicker() {
-  const picker = document.getElementById('picker');
-  picker.hidden = true;
-  document.body.style.overflow = '';
-}
-
-/* ---------- Onboard ---------- */
-function ensureOnboarded() {
-  return new Promise((resolve) => {
-    if (STATE.self.name) { resolve(); return; }
-
-    const onb = document.getElementById('onboard');
-    const avatars = document.getElementById('onboardAvatars');
-    const nameInput = document.getElementById('onboardName');
-    const goBtn = document.getElementById('onboardGo');
-
-    avatars.innerHTML = '';
-    AVATAR_COLORS.forEach((c, i) => {
-      const a = document.createElement('button');
-      a.className = 'onboard__avatar' + (c === STATE.self.color ? ' active' : '');
-      a.style.background = `radial-gradient(circle at 30% 30%, #fff, ${c} 60%, #000)`;
-      a.addEventListener('click', () => {
-        STATE.self.color = c;
-        avatars.querySelectorAll('.onboard__avatar').forEach((el) => el.classList.remove('active'));
-        a.classList.add('active');
-      });
-      avatars.appendChild(a);
-    });
-
-    nameInput.value = '';
-    nameInput.focus();
-    onb.hidden = false;
-
-    goBtn.onclick = () => {
-      const name = (nameInput.value || randomName()).trim().slice(0, 20);
-      STATE.self.name = name;
-      saveSelf();
-      onb.hidden = true;
-      resolve();
-    };
-    nameInput.onkeydown = (e) => { if (e.key === 'Enter') goBtn.click(); };
-  });
-}
-
-function randomName() {
-  const adj = ['Quiet','Orbit','Drift','Lumen','Echo','Nova','Vector','Quantum','Relay','Zephyr'];
-  const noun = ['Traveller','Voyager','Walker','Scout','Wanderer','Pilot','Observer','Ghost','Nomad','Node'];
-  return adj[Math.floor(Math.random()*adj.length)] + noun[Math.floor(Math.random()*noun.length)];
-}
-
-/* ---------- Enter place ---------- */
-async function requestEnter(placeId) {
-  closePicker();
-  await ensureOnboarded();
-  await teleportTo(placeId);
-}
-
-async function teleportTo(placeId) {
-  const place = getPlace(placeId);
-  STATE.currentPlaceId = place.id;
-  updateURL(place.id);
-
-  // Teleport overlay
-  const overlay = document.getElementById('teleport');
-  document.getElementById('teleportLabel').textContent = `Opening ${place.name}`;
-  overlay.hidden = false;
-  // force reflow so animation restarts each call
-  void overlay.offsetWidth;
-  overlay.querySelector('.teleport__rings').style.animation = 'none';
-  overlay.querySelector('.teleport__flash').style.animation = 'none';
-  overlay.querySelector('.teleport__label').style.animation = 'none';
-  void overlay.offsetWidth;
-  overlay.querySelector('.teleport__rings').style.animation = '';
-  overlay.querySelector('.teleport__flash').style.animation = '';
-  overlay.querySelector('.teleport__label').style.animation = '';
-
-  // Prepare scene
-  const sceneRoot = document.getElementById('scene');
-  const landing = document.getElementById('landing');
-  if (!STATE.scene) {
-    sceneRoot.hidden = false;
-    STATE.scene = new ZeropointScene(document.getElementById('sceneCanvas'));
-    STATE.scene.setHUDContainer(sceneRoot);
-    STATE.scene.setSelfAvatar({ color: STATE.self.color });
-  } else {
-    sceneRoot.hidden = false;
+  // First-run intro
+  if (!localStorage.getItem('pinly.introSeen')) {
+    setTimeout(() => {
+      document.getElementById('intro').hidden = false;
+    }, 1100);
   }
-  landing.hidden = true;
 
-  await STATE.scene.setPlace(place);
-
-  // Update HUD
-  document.querySelector('.scene__placeName').textContent = place.name;
-  document.querySelector('.scene__placeMeta').textContent = place.country;
-
-  // Start networking
-  await startRoom(place.id);
-
-  // Dismiss teleport overlay
-  setTimeout(() => { overlay.hidden = true; }, 1300);
-
-  showToast(`Arrived at ${place.name}`);
+  // Sync URL deep-link if present
+  applyURLState();
 }
 
-async function exitScene() {
-  if (STATE.room) { STATE.room.stop(); STATE.room = null; }
-  clearInterval(STATE.posSendTimer);
-  STATE.posSendTimer = null;
+/* ---------------- Map ---------------- */
+function initMap() {
+  const map = new maplibregl.Map({
+    container: 'map',
+    style: DARK_STYLE,
+    center: [139.7005, 35.6595],   // Shibuya as default
+    zoom: 13,
+    minZoom: 2,
+    maxZoom: 19,
+    attributionControl: false,
+    pitchWithRotate: false,
+    dragRotate: false,
+  });
+  STATE.map = map;
+  map.addControl(new maplibregl.AttributionControl({ compact: true }));
 
-  const sceneRoot = document.getElementById('scene');
-  sceneRoot.hidden = true;
-  const landing = document.getElementById('landing');
-  landing.hidden = false;
-  STATE.currentPlaceId = null;
-  updateURL(null);
-  document.getElementById('statOnline').textContent = simulateOnlineCount();
+  map.on('load', () => {
+    STATE.layer = new MarkerLayer(map, {
+      onPinClick: (p) => openDetail(p.id),
+      onClusterClick: ({ lat, lng }) => {
+        map.flyTo({ center: [lng, lat], zoom: Math.min(map.getZoom() + 2, 17), speed: 1.5 });
+      },
+    });
+    refreshActive();
+    updateStrip();
+  });
+
+  // Tap / click on map to enter compose if targeting mode
+  map.on('click', (e) => {
+    if (STATE.composeTargetingMode) {
+      STATE.composeLngLat = [e.lngLat.lng, e.lngLat.lat];
+      openCompose();
+    }
+  });
+
+  // Update strip people-count when zooming
+  map.on('moveend', () => updateStrip());
 }
 
-/* ---------- Room networking ---------- */
-async function startRoom(placeId) {
-  if (STATE.room) { STATE.room.stop(); STATE.room = null; }
-  // Reset self id (each room = fresh peer identity) to avoid stale PeerJS ids
-  STATE.self.id = 'zpnt-u-' + Math.random().toString(36).slice(2, 10);
-  const room = new ZeroRoom({ roomId: placeId, self: { ...STATE.self } });
-  STATE.room = room;
-
-  room.addEventListener('peer-join', (e) => {
-    const p = e.detail;
-    STATE.scene.addPeer(p.id, { name: p.name, color: p.color });
-    updateCount();
-    showToast(`${p.name} joined`);
-  });
-  room.addEventListener('peer-leave', (e) => {
-    STATE.scene.removePeer(e.detail.id);
-    updateCount();
-  });
-  room.addEventListener('pos', (e) => {
-    const { id, x, z } = e.detail;
-    STATE.scene.updatePeer(id, { x, z });
-  });
-  room.addEventListener('chat', (e) => {
-    const { id, text } = e.detail;
-    STATE.scene.setPeerChat(id, text);
-  });
-  room.addEventListener('emote', (e) => {
-    const { id, e: emote } = e.detail;
-    STATE.scene.setPeerEmote(id, emote);
-  });
-
-  await room.start();
-  updateCount();
-
-  // Heartbeat position + compass
-  STATE.posSendTimer = setInterval(() => {
-    if (!STATE.scene || !STATE.room) return;
-    const t = STATE.scene.getSelfTransform();
-    STATE.room.sendPosition(t.x, t.z, t.yaw);
-    updateCompass();
-  }, 180);
-}
-
-function updateCount() {
-  const el = document.getElementById('sceneCount');
-  if (!el) return;
-  const n = 1 + (STATE.room ? STATE.room.peerCount : 0);
-  el.textContent = n;
-}
-
-function updateCompass() {
-  const needle = document.querySelector('.scene__compass-needle');
-  if (!needle || !STATE.scene) return;
-  const deg = STATE.scene.getYawDegrees();
-  needle.style.transform = `translateX(-50%) rotate(${-deg}deg)`;
-}
-
-/* ---------- Scene HUD actions ---------- */
-function wireSceneHUD() {
-  const exitBtn = document.getElementById('exitBtn');
-  const switchBtn = document.getElementById('switchBtn');
-  const emoteBtn = document.getElementById('emoteBtn');
-  const shareBtn = document.getElementById('shareBtn');
-  const fsBtn = document.getElementById('fsBtn');
-  const emoteRail = document.getElementById('emoteRail');
-  const chatForm = document.getElementById('sceneChatForm');
-  const chatInput = document.getElementById('sceneChatInput');
-
-  exitBtn.addEventListener('click', exitScene);
-
-  switchBtn.addEventListener('click', () => openPicker());
-
-  emoteBtn.addEventListener('click', () => {
-    emoteRail.hidden = !emoteRail.hidden;
-  });
-  emoteRail.querySelectorAll('button').forEach((b) => {
+/* ---------------- UI ---------------- */
+function initUI() {
+  // Category bar
+  const catbar = document.getElementById('catbar');
+  CATEGORIES.forEach((c) => {
+    const b = document.createElement('button');
+    b.className = 'catbar__btn' + (c.id === 'all' ? ' active' : '');
+    b.dataset.cat = c.id;
+    b.innerHTML = c.id === 'all'
+      ? `<span class="dot" style="background:${c.color}"></span><span>${c.label}</span>`
+      : `<span style="font-size:14px">${c.emoji}</span><span>${c.label}</span>`;
     b.addEventListener('click', () => {
-      const e = b.dataset.emote;
-      STATE.scene?.selfEmote(e);
-      STATE.room?.sendEmote(e);
-      emoteRail.hidden = true;
+      STATE.filterCat = c.id;
+      catbar.querySelectorAll('.catbar__btn').forEach((el) => el.classList.toggle('active', el.dataset.cat === c.id));
+      refreshActive();
+    });
+    catbar.appendChild(b);
+  });
+
+  // Search
+  const search = document.getElementById('searchInput');
+  let searchTimer;
+  search.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      STATE.searchQuery = search.value;
+      refreshActive();
+    }, 220);
+  });
+  search.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const q = search.value.trim();
+      if (q) tryGeocode(q);
+    }
+  });
+
+  // Trending
+  const trendBtn = document.getElementById('trendingBtn');
+  const trend = document.getElementById('trend');
+  trendBtn.addEventListener('click', () => { trend.hidden = !trend.hidden; if (!trend.hidden) renderTrend('hot'); });
+  document.querySelectorAll('[data-close-trend]').forEach((el) => el.addEventListener('click', () => { trend.hidden = true; }));
+  let trendTab = 'hot';
+  document.querySelectorAll('.trend__tab').forEach((b) => {
+    b.addEventListener('click', () => {
+      trendTab = b.dataset.tab;
+      document.querySelectorAll('.trend__tab').forEach((el) => el.classList.toggle('active', el === b));
+      renderTrend(trendTab);
     });
   });
 
-  shareBtn.addEventListener('click', async () => {
-    const url = location.href;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Zeropoint', text: 'Meet me at this door on Zeropoint.', url });
-      } else {
-        await navigator.clipboard.writeText(url);
-        showToast('Link copied. Share it with anyone.');
-      }
-    } catch {}
+  // Locate
+  document.getElementById('locateBtn').addEventListener('click', locateMe);
+
+  // New pin (FAB + appbar +)
+  const enterCompose = () => enterTargetingMode();
+  document.getElementById('newPinBtn').addEventListener('click', enterCompose);
+  document.getElementById('fab').addEventListener('click', enterCompose);
+
+  // Compose sheet
+  const composeSheet = document.getElementById('composeSheet');
+  document.querySelectorAll('[data-close-compose]').forEach((el) => el.addEventListener('click', closeCompose));
+  const composeText = document.getElementById('composeText');
+  const composeCount = document.getElementById('composeCount');
+  composeText.addEventListener('input', () => {
+    const n = composeText.value.length;
+    composeCount.textContent = `${n} / 50`;
+    composeCount.classList.toggle('warn', n >= 40 && n < 50);
+    composeCount.classList.toggle('over', n >= 50);
+  });
+  document.getElementById('composeSend').addEventListener('click', submitPin);
+
+  // Compose category buttons
+  const composeCats = document.getElementById('composeCats');
+  composeCats.innerHTML = '';
+  CATS_FOR_COMPOSE.forEach((c) => {
+    const b = document.createElement('button');
+    b.className = 'compose__cat' + (c.id === STATE.composeCat ? ' active' : '');
+    b.dataset.cat = c.id;
+    b.style.setProperty('--cat', c.color);
+    b.innerHTML = `<span style="font-size:14px">${c.emoji}</span><span>${c.label}</span>`;
+    b.addEventListener('click', () => {
+      STATE.composeCat = c.id;
+      composeCats.querySelectorAll('.compose__cat').forEach((el) => {
+        const cat = getCategory(el.dataset.cat);
+        const active = el.dataset.cat === c.id;
+        el.classList.toggle('active', active);
+        el.style.background = active ? cat.color : '';
+        el.style.color = active ? '#0a0d14' : '';
+      });
+    });
+    composeCats.appendChild(b);
+  });
+  // initial styling
+  setTimeout(() => composeCats.querySelector('.compose__cat.active')?.click(), 0);
+
+  // Detail
+  document.querySelectorAll('[data-close-detail]').forEach((el) => el.addEventListener('click', closeDetail));
+  document.getElementById('detailShare').addEventListener('click', shareCurrent);
+  document.getElementById('detailReport').addEventListener('click', reportCurrent);
+
+  // Pro modal
+  const proBtn = document.getElementById('proBtn');
+  const pro = document.getElementById('pro');
+  proBtn.addEventListener('click', () => { pro.hidden = false; });
+  document.querySelectorAll('[data-close-pro]').forEach((el) => el.addEventListener('click', () => { pro.hidden = true; }));
+  document.getElementById('proWaitlist').addEventListener('click', () => {
+    pro.hidden = true;
+    showToast('登録ありがとう！公開時に通知します。');
   });
 
-  fsBtn.addEventListener('click', () => {
-    const el = document.documentElement;
-    if (!document.fullscreenElement) el.requestFullscreen?.();
-    else document.exitFullscreen?.();
+  // Intro
+  document.getElementById('introGo').addEventListener('click', () => {
+    document.getElementById('intro').hidden = true;
+    localStorage.setItem('pinly.introSeen', '1');
   });
 
-  chatForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const text = (chatInput.value || '').trim();
-    if (!text) return;
-    chatInput.value = '';
-    // show bubble over self (simulate by emoting own position via scene)
-    const selfPos = STATE.scene.avatarPos.clone();
-    const bubble = document.createElement('div');
-    bubble.className = 'chat-bubble';
-    bubble.textContent = text;
-    document.getElementById('scene').appendChild(bubble);
-    let expires = performance.now() + 5000;
-    const anim = () => {
-      const v = selfPos.clone().setY(1.6).project(STATE.scene.camera);
-      const rect = STATE.scene.canvas.getBoundingClientRect();
-      const x = (v.x * 0.5 + 0.5) * rect.width + rect.left;
-      const y = (-v.y * 0.5 + 0.5) * rect.height + rect.top - 20;
-      bubble.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
-      if (performance.now() < expires && v.z > -1 && v.z < 1) requestAnimationFrame(anim);
-      else bubble.remove();
-    };
-    requestAnimationFrame(anim);
-
-    STATE.room?.sendChat(text);
+  // Esc handlers
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (!document.getElementById('detail').hidden) closeDetail();
+    else if (!document.getElementById('composeSheet').hidden) closeCompose();
+    else if (!document.getElementById('pro').hidden) document.getElementById('pro').hidden = true;
+    else if (!document.getElementById('trend').hidden) document.getElementById('trend').hidden = true;
+    else if (STATE.composeTargetingMode) exitTargetingMode();
   });
 }
 
-/* ---------- URL & share ---------- */
-function updateURL(placeId) {
+/* ---------------- Store events ---------------- */
+function initStoreEvents() {
+  STATE.store.addEventListener('add', (e) => {
+    refreshActive(e.detail.id);
+    updateStrip();
+  });
+  STATE.store.addEventListener('update', (e) => {
+    STATE.layer && STATE.layer.updatePin(e.detail);
+    updateStrip();
+    if (STATE.selectedPinId === e.detail.id) renderDetail(e.detail);
+  });
+}
+
+function refreshActive(animateId = null) {
+  if (!STATE.layer) return;
+  const filtered = STATE.store.filter({ cat: STATE.filterCat, q: STATE.searchQuery });
+  STATE.layer.setActive(filtered);
+  if (animateId) {
+    const p = STATE.store.get(animateId);
+    if (p) STATE.layer.addPinAnimated(p);
+  }
+}
+
+function updateStrip() {
+  const all = STATE.store.list();
+  document.getElementById('stripCount').textContent = formatN(all.length);
+  // Estimate "people here" from unique authors recently active in viewport
+  let people = 0;
+  if (STATE.map) {
+    const b = STATE.map.getBounds();
+    const seen = new Set();
+    const now = Math.floor(Date.now() / 1000);
+    for (const p of all) {
+      if (p.lat < b.getSouth() || p.lat > b.getNorth()) continue;
+      if (p.lng < b.getWest()  || p.lng > b.getEast())  continue;
+      if (now - p.ts > 86400 * 7) continue;
+      seen.add(p.author);
+    }
+    // Add a small "live" baseline for nicer UX
+    people = seen.size + Math.floor(3 + Math.random() * 6);
+  }
+  document.getElementById('stripPeople').textContent = formatN(people);
+}
+
+/* ---------------- Compose ---------------- */
+function enterTargetingMode() {
+  STATE.composeTargetingMode = true;
+  document.getElementById('targetCross').hidden = false;
+  document.getElementById('fab').classList.add('is-targeting');
+  showToast('地図を動かして場所を合わせ、タップで決定');
+  // Tap-to-decide via center: clicking the FAB confirms
+  // Re-bind FAB to confirm in targeting mode
+  const fab = document.getElementById('fab');
+  fab.onclick = confirmTarget;
+}
+
+function exitTargetingMode() {
+  STATE.composeTargetingMode = false;
+  document.getElementById('targetCross').hidden = true;
+  const fab = document.getElementById('fab');
+  fab.classList.remove('is-targeting');
+  fab.onclick = enterTargetingMode;
+}
+
+function confirmTarget() {
+  const c = STATE.map.getCenter();
+  STATE.composeLngLat = [c.lng, c.lat];
+  openCompose();
+}
+
+async function openCompose() {
+  document.getElementById('composeSheet').hidden = false;
+  document.getElementById('targetCross').hidden = true;
+  document.getElementById('fab').classList.remove('is-targeting');
+  STATE.composeTargetingMode = false;
+  // reset
+  document.getElementById('composeText').value = '';
+  document.getElementById('composeCount').textContent = '0 / 50';
+  document.getElementById('composeCount').classList.remove('warn', 'over');
+  setTimeout(() => document.getElementById('composeText').focus(), 200);
+
+  // Try a reverse-geocode to show a friendly location
+  const [lng, lat] = STATE.composeLngLat || [STATE.map.getCenter().lng, STATE.map.getCenter().lat];
+  document.getElementById('composeLoc').textContent =
+    `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)} （タップ位置）`;
+  reverseGeocode(lat, lng).then((label) => {
+    if (label) document.getElementById('composeLoc').textContent = `📍 ${label}`;
+  });
+}
+
+function closeCompose() {
+  document.getElementById('composeSheet').hidden = true;
+  // Re-arm FAB to enter targeting next time
+  const fab = document.getElementById('fab');
+  fab.onclick = enterTargetingMode;
+}
+
+function submitPin() {
+  const text = document.getElementById('composeText').value.trim();
+  if (!text) { showToast('ひとことを入力してね'); return; }
+  if (text.length > 50) { showToast('50字以内にしてね'); return; }
+  const [lng, lat] = STATE.composeLngLat || [STATE.map.getCenter().lng, STATE.map.getCenter().lat];
+  const loc = document.getElementById('composeLoc').textContent.replace(/^📍\s*/, '').replace(/\s*（タップ位置）$/, '');
+
+  const pin = STATE.store.add({ lat, lng, cat: STATE.composeCat, text, loc });
+  closeCompose();
+  STATE.layer.flyTo(pin);
+  setTimeout(() => openDetail(pin.id), 700);
+  showToast('ピン、刺さった。');
+}
+
+/* ---------------- Detail ---------------- */
+function openDetail(id) {
+  const p = STATE.store.get(id);
+  if (!p) return;
+  STATE.selectedPinId = id;
+  renderDetail(p);
+  document.getElementById('detail').hidden = false;
+  // Update URL share-state
   const url = new URL(location.href);
-  if (placeId) url.searchParams.set('at', placeId);
-  else url.searchParams.delete('at');
+  url.searchParams.set('pin', id);
   history.replaceState(null, '', url.toString());
 }
-function maybeAutoJoinFromURL() {
-  const at = new URLSearchParams(location.search).get('at');
-  if (at && PLACES.find((p) => p.id === at)) {
-    requestEnter(at);
+
+function closeDetail() {
+  document.getElementById('detail').hidden = true;
+  STATE.selectedPinId = null;
+  const url = new URL(location.href);
+  url.searchParams.delete('pin');
+  history.replaceState(null, '', url.toString());
+}
+
+function renderDetail(p) {
+  const cat = getCategory(p.cat);
+  document.getElementById('detailCat').textContent = cat.emoji;
+  document.getElementById('detailCat').style.background = `${cat.color}22`;
+  document.getElementById('detailAuthor').textContent = p.official ? '公式ピン ✓' : '匿名のだれか';
+  document.getElementById('detailWhen').textContent = relTime(p.ts);
+  document.getElementById('detailText').textContent = p.text;
+  document.getElementById('detailLoc').innerHTML =
+    `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>` +
+    ` ${p.loc || `${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}`}`;
+
+  // Reactions
+  const REACTIONS = ['🔥', '💯', '😂', '✨', '🤔', '⚠️'];
+  const wrap = document.getElementById('detailReactions');
+  wrap.innerHTML = '';
+  REACTIONS.forEach((emoji) => {
+    const count = p.reactions[emoji] || 0;
+    const mine = p.myReactions.includes(emoji);
+    const b = document.createElement('button');
+    b.className = 'reaction' + (mine ? ' active' : '');
+    b.innerHTML = `<span>${emoji}</span>${count > 0 ? `<span class="reaction__count">${count}</span>` : ''}`;
+    b.addEventListener('click', () => {
+      STATE.store.react(p.id, emoji);
+    });
+    wrap.appendChild(b);
+  });
+}
+
+function shareCurrent() {
+  const p = STATE.store.get(STATE.selectedPinId);
+  if (!p) return;
+  const url = new URL(location.href);
+  url.searchParams.set('pin', p.id);
+  const shareText = `「${p.text}」 — ${p.loc || ''} #Pinly`;
+  if (navigator.share) {
+    navigator.share({ title: 'Pinly', text: shareText, url: url.toString() }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(`${shareText}\n${url.toString()}`).then(() => showToast('リンクをコピーしました'));
   }
 }
 
-/* ---------- Toast ---------- */
+function reportCurrent() {
+  const p = STATE.store.get(STATE.selectedPinId);
+  if (!p) return;
+  STATE.store.report(p.id);
+  showToast('通報を受け付けました。確認します。');
+  closeDetail();
+}
+
+/* ---------------- Trending panel ---------------- */
+function renderTrend(tab) {
+  const list = document.getElementById('trendList');
+  list.innerHTML = '';
+  let items = [];
+  if (tab === 'hot') items = STATE.store.hot(30);
+  else if (tab === 'new') items = STATE.store.newest(30);
+  else if (tab === 'spots') items = STATE.store.spots(20);
+
+  if (!items.length) {
+    list.innerHTML = `<div class="trend__empty">まだピンがありません。<br/>最初のひとことを刺してみよう。</div>`;
+    return;
+  }
+
+  if (tab === 'spots') {
+    items.forEach((s) => {
+      const item = document.createElement('div');
+      item.className = 'trend__item';
+      item.innerHTML = `
+        <div class="trend__row">
+          <div class="trend__cat" style="background:rgba(255,46,109,.15)">📍</div>
+          <span style="font-weight:600;color:var(--text)">${escapeHTML(s.loc || 'ホットスポット')}</span>
+          <span style="margin-left:auto">${s.count} ピン</span>
+        </div>
+        <div class="trend__text">${s.samples.slice(0, 2).map((x) => escapeHTML(x.text)).join(' · ')}</div>
+        <div class="trend__loc">合計リアクション ${s.reactions}</div>
+      `;
+      item.addEventListener('click', () => {
+        STATE.map.flyTo({ center: [s.lng, s.lat], zoom: 15, speed: 1.4 });
+        document.getElementById('trend').hidden = true;
+      });
+      list.appendChild(item);
+    });
+    return;
+  }
+
+  items.forEach((p) => {
+    const cat = getCategory(p.cat);
+    const reacts = Object.entries(p.reactions || {});
+    const item = document.createElement('div');
+    item.className = 'trend__item';
+    item.innerHTML = `
+      <div class="trend__row">
+        <div class="trend__cat" style="background:${cat.color}22">${cat.emoji}</div>
+        <span>${cat.label}</span>
+        <span style="margin-left:auto">${relTime(p.ts)}</span>
+      </div>
+      <div class="trend__text">${escapeHTML(p.text)}</div>
+      <div class="trend__loc">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        ${escapeHTML(p.loc || `${p.lat.toFixed(3)}, ${p.lng.toFixed(3)}`)}
+      </div>
+      ${reacts.length ? `<div class="trend__reactions">${reacts.slice(0, 4).map(([e, n]) => `<span>${e} ${n}</span>`).join('')}</div>` : ''}
+    `;
+    item.addEventListener('click', () => {
+      STATE.map.flyTo({ center: [p.lng, p.lat], zoom: 15, speed: 1.4 });
+      document.getElementById('trend').hidden = true;
+      setTimeout(() => openDetail(p.id), 600);
+    });
+    list.appendChild(item);
+  });
+}
+
+/* ---------------- Locate me ---------------- */
+function locateMe() {
+  if (!navigator.geolocation) { showToast('位置情報が使えない端末です'); return; }
+  showToast('現在地を取得中…');
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude, longitude } = pos.coords;
+      STATE.userLocation = { lat: latitude, lng: longitude };
+      STATE.map.flyTo({ center: [longitude, latitude], zoom: 15, speed: 1.4 });
+      placeUserMarker();
+      showToast('現在地を表示中');
+    },
+    () => showToast('現在地が取得できませんでした'),
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+  );
+}
+
+function placeUserMarker() {
+  if (!STATE.userLocation) return;
+  if (STATE.userMarker) { STATE.userMarker.remove(); STATE.userMarker = null; }
+  const el = document.createElement('div');
+  el.className = 'pinly-user';
+  STATE.userMarker = new maplibregl.Marker({ element: el, anchor: 'center' })
+    .setLngLat([STATE.userLocation.lng, STATE.userLocation.lat])
+    .addTo(STATE.map);
+}
+
+/* ---------------- Geocoding ---------------- */
+async function tryGeocode(q) {
+  // Use Nominatim's free public API (low rate limit, OK for sparse user use)
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
+    const r = await fetch(url, { headers: { 'Accept-Language': 'ja' } });
+    if (!r.ok) return;
+    const arr = await r.json();
+    if (arr && arr[0]) {
+      const { lat, lon, display_name } = arr[0];
+      STATE.map.flyTo({ center: [+lon, +lat], zoom: 14, speed: 1.4 });
+      showToast(`📍 ${display_name.split(',')[0]}`);
+    } else {
+      showToast('場所が見つかりませんでした');
+    }
+  } catch {
+    showToast('検索に失敗しました');
+  }
+}
+
+async function reverseGeocode(lat, lng) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=0`;
+    const r = await fetch(url, { headers: { 'Accept-Language': 'ja' } });
+    if (!r.ok) return null;
+    const j = await r.json();
+    if (j && j.display_name) {
+      // Use the most local part for clarity
+      return j.name || j.display_name.split(',').slice(0, 2).join(', ');
+    }
+  } catch {}
+  return null;
+}
+
+/* ---------------- URL deep-link ---------------- */
+function applyURLState() {
+  const u = new URL(location.href);
+  const pinId = u.searchParams.get('pin');
+  const q = u.searchParams.get('q');
+  const center = u.searchParams.get('c');   // "lat,lng,zoom"
+  if (center) {
+    const [lat, lng, zoom] = center.split(',').map(Number);
+    if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+      STATE.map.once('load', () => {
+        STATE.map.jumpTo({ center: [lng, lat], zoom: Number.isFinite(zoom) ? zoom : 14 });
+      });
+    }
+  }
+  if (q) {
+    document.getElementById('searchInput').value = q;
+    STATE.searchQuery = q;
+  }
+  if (pinId) {
+    STATE.map.once('idle', () => {
+      const p = STATE.store.get(pinId);
+      if (p) {
+        STATE.layer.flyTo(p);
+        setTimeout(() => openDetail(pinId), 700);
+      }
+    });
+  }
+}
+
+/* ---------------- Util ---------------- */
 function showToast(msg) {
-  const el = document.getElementById('sceneToast');
-  if (!el) return;
+  const el = document.getElementById('toast');
   el.textContent = msg;
   el.hidden = false;
   clearTimeout(showToast._t);
-  showToast._t = setTimeout(() => { el.hidden = true; }, 2600);
+  showToast._t = setTimeout(() => { el.hidden = true; }, 2400);
 }
-
-/* ---------- Misc ---------- */
+function relTime(tsSec) {
+  const diff = Math.floor(Date.now() / 1000) - tsSec;
+  if (diff < 60) return 'たった今';
+  if (diff < 3600) return `${Math.floor(diff / 60)}分前`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}時間前`;
+  if (diff < 86400 * 30) return `${Math.floor(diff / 86400)}日前`;
+  const d = new Date(tsSec * 1000);
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+function formatN(n) {
+  if (n >= 10000) return (n / 10000).toFixed(1) + '万';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+  return String(n);
+}
 function escapeHTML(s) {
   return String(s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-/* ---------- Go ---------- */
-document.addEventListener('DOMContentLoaded', () => {
-  wireSceneHUD();
-  boot();
-});
+/* ---------------- Go ---------------- */
+document.addEventListener('DOMContentLoaded', () => { boot(); });
