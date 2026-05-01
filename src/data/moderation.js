@@ -1,55 +1,74 @@
 /**
  * Lightweight content moderation for Pinly.
  *
- * Goals:
- *   - Block clearly harmful posts (violence, slurs, explicit personal info).
+ * Strategy:
+ *   - Reject clearly harmful posts (violence, severe slurs, explicit personal info, spam patterns).
  *   - Warn users on borderline content but allow them to confirm.
- *   - Avoid false-positives on common conversational speech ("お腹すいた" など).
+ *   - Avoid false-positives on common conversational speech.
  *
- * Fully client-side. Real production should use server-side ML moderation.
+ * Fully client-side. A production deployment should also use a server-side
+ * ML moderation pipeline (e.g. OpenAI moderation, Perspective API).
+ *
+ * NOTE: All inputs are normalized (lower-cased, NFKC) before pattern matching
+ * to defeat trivial bypass attempts using full-width or alt-case characters.
  */
 
-// Severe (immediate reject)
+// ----- Severe (immediate reject) -----
 const SEVERE_PATTERNS = [
-  /(死ね|殺す|消えろ|殺害|自殺しろ|首吊れ|爆破|テロ)/i,
-  /\b(kill\s+(you|him|her|them))\b/i,
-  /(レイプ|強姦|児童ポルノ|児ポ)/i,
-  /(〇〇さん死|の家|の住所).*(教え|住んで|住所)/i,
+  /(死ね|殺す|消えろ|殺害|自殺しろ|首吊れ|爆破予告|テロ予告|爆破して|放火)/i,
+  /\bkill\s+(you|him|her|them|yourself)\b/i,
+  /(レイプ|強姦|児童ポルノ|児ポ|性的虐待)/i,
+  /(の家|の住所|の自宅).*(教え|住んで|住所|晒|さらせ)/i,
+  /(晒し上げ|個人特定|身バレ).*(する|しろ|やる)/i,
 ];
 
-// Warning level (prompt user)
+// ----- Warning (prompt user) -----
 const WARNING_PATTERNS = [
-  /(クソ|くそ|ふざけ|うざ|きも|きしょ)/i,
+  /(ふざけんな|うざい|きもい|きしょい|うっとうしい)/i,
   /(差別|蔑視|ヘイト)/i,
-  /(エロ|ポルノ|18禁|アダルト|セックス)/i,
-  /(投資|仮想通貨|ビットコイン|暗号資産).*(儲|稼|必勝|無料)/i,
-  /(LINE\s*ID|追加してね|DMで|フォロバ100)/i,
-  /(\$|¥|円).{0,8}(送金|振込|稼げ|儲)/i,
+  /(エロ|ポルノ|18禁|アダルト|セックス|ヌード)/i,
+  /(投資|仮想通貨|ビットコイン|暗号資産).*(儲|稼|必勝|無料配布)/i,
+  /(LINE\s*ID|追加してね|DMで|フォロバ100|プロフ見て|プロフ確認)/i,
+  /(\$|¥|円).{0,8}(送金|振込|稼げ|儲か)/i,
 ];
 
-// Personal information detection
+// ----- Personal info (immediate reject) -----
 const PERSONAL_INFO_PATTERNS = [
-  /\b\d{2,4}-\d{2,4}-\d{3,4}\b/, // phone-like
-  /\b0[78]0[\s-]?\d{4}[\s-]?\d{4}\b/, // mobile JP
-  /[\w.+-]+@[\w-]+\.[\w.-]+/i, // email
-  /〒?\s*\d{3}-\d{4}/, // postal code
-  /\b\d{16}\b/, // long digit sequences (cc-like)
+  // Phone-like with hyphens (3-4-4 / 2-4-4 etc.) — but not pure dates
+  /\b0[\d]{1,4}[\s-][\d]{1,4}[\s-][\d]{3,4}\b/,
+  // Mobile JP without separators
+  /\b0[789]0\d{8}\b/,
+  // Email
+  /[a-z0-9._+-]+@[a-z0-9-]+\.[a-z0-9.-]+/i,
+  // Postal code 〒xxx-xxxx
+  /〒\s*\d{3}-\d{4}/,
+  // Long digit sequence (CC-like)
+  /\b\d{14,19}\b/,
 ];
 
-// Spam heuristic helpers
+// ----- Spam heuristics -----
 function isMostlyRepeated(text) {
   const t = text.replace(/\s+/g, '');
   if (t.length < 6) return false;
-  // single character repeated >= 60%
   const counts = {};
   for (const ch of t) counts[ch] = (counts[ch] || 0) + 1;
   const max = Math.max(...Object.values(counts));
-  return max / t.length > 0.6;
+  return max / t.length > 0.65;
 }
 
 function looksLikeUrlSpam(text) {
   const urls = (text.match(/https?:\/\/\S+/gi) || []).length;
-  return urls >= 2 || /bit\.ly|t\.co|tinyurl|goo\.gl/i.test(text);
+  return urls >= 1 || /bit\.ly|t\.co|tinyurl|goo\.gl|is\.gd|ow\.ly/i.test(text);
+}
+
+/** Normalize for matching: NFKC + lower-case, strip zero-width chars. */
+function normalize(text) {
+  if (!text) return '';
+  let t = String(text);
+  try { t = t.normalize('NFKC'); } catch {}
+  // strip zero-width characters often used to obfuscate
+  t = t.replace(/[\u200B-\u200D\uFEFF\u2060]/g, '');
+  return t.toLowerCase();
 }
 
 /**
@@ -58,14 +77,24 @@ function looksLikeUrlSpam(text) {
  *   - reasons: string[] (machine-readable)
  *   - message: human-friendly reason
  */
-export function getModerationVerdict(text) {
+export function getModerationVerdict(rawText) {
   const reasons = [];
-  if (!text || typeof text !== 'string') {
+
+  if (rawText == null || typeof rawText !== 'string') {
     return { status: 'rejected', reasons: ['empty'], message: '本文を入力してください。' };
   }
-  const t = text.trim();
-  if (t.length === 0) return { status: 'rejected', reasons: ['empty'], message: '本文を入力してください。' };
-  if (t.length > 50) return { status: 'rejected', reasons: ['too_long'], message: '50字以内で入力してください。' };
+
+  const trimmed = rawText.trim();
+  if (trimmed.length === 0) return { status: 'rejected', reasons: ['empty'], message: '本文を入力してください。' };
+  if (trimmed.length > 50) return { status: 'rejected', reasons: ['too_long'], message: '50字以内で入力してください。' };
+
+  // Reject control characters (allow basic whitespace/newlines).
+  // U+0000-U+001F except \t \n \r are control. Also disallow \u2028/\u2029 line separators.
+  if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u2028\u2029]/.test(trimmed)) {
+    return { status: 'rejected', reasons: ['control_chars'], message: '🚫 利用できない制御文字が含まれています。' };
+  }
+
+  const t = normalize(trimmed);
 
   // Severe -> reject
   for (const p of SEVERE_PATTERNS) {
@@ -79,11 +108,11 @@ export function getModerationVerdict(text) {
   }
 
   // Personal info -> reject
-  if (containsPersonalInfo(t)) {
+  if (PERSONAL_INFO_PATTERNS.some((p) => p.test(t))) {
     return {
       status: 'rejected',
       reasons: ['personal_info'],
-      message: '🚫 電話番号・メールアドレス・住所などの個人情報は投稿できません。',
+      message: '🚫 電話番号・メール・住所などの個人情報は投稿できません。',
     };
   }
 
@@ -92,7 +121,7 @@ export function getModerationVerdict(text) {
     return {
       status: 'rejected',
       reasons: ['url_spam'],
-      message: '🚫 短縮URL や複数のURL を含む投稿はできません。',
+      message: '🚫 URL や短縮URL を含む投稿はできません。',
     };
   }
 
@@ -122,23 +151,27 @@ export function getModerationVerdict(text) {
 
 export function containsPersonalInfo(text) {
   if (!text) return false;
-  return PERSONAL_INFO_PATTERNS.some((p) => p.test(text));
+  const t = normalize(text);
+  return PERSONAL_INFO_PATTERNS.some((p) => p.test(t));
 }
 
 /**
- * HTML escape. main.js uses this when rendering arbitrary user text.
+ * HTML escape. Used when we ever interpolate user text into innerHTML.
+ * The app prefers `textContent` whenever possible; this is a defense-in-depth
+ * for cases where HTML-construction is unavoidable.
  */
 export function sanitizeText(text) {
-  if (!text || typeof text !== 'string') return '';
-  return text
+  if (text == null) return '';
+  return String(text)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
 }
 
-/* Backward-compat exports (kept for potential external use). */
+/* Backward-compat exports. */
 export function analyzeText(text) {
   const v = getModerationVerdict(text);
   if (v.status === 'rejected') return 1;
