@@ -7,21 +7,21 @@
 
 // Initialize Supabase client
 // Note: Replace these with your actual Supabase project credentials
-const SUPABASE_URL = 'https://your-project.supabase.co';
-const SUPABASE_ANON_KEY = 'your-anon-key';
+const SUPABASE_URL = '';
+const SUPABASE_ANON_KEY = '';
 
 // Check if Supabase is available
 let supabaseClient = null;
 
 async function initSupabase() {
   try {
-    // Dynamically import Supabase client
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
-    
-    if (!SUPABASE_URL || SUPABASE_URL.includes('your-project')) {
-      console.warn('Supabase not configured. Using local storage only.');
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.includes('your-project')) {
+      console.log('Supabase not configured. Using local storage only.');
       return null;
     }
+
+    // Dynamically import Supabase client
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
     
     supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('Supabase initialized');

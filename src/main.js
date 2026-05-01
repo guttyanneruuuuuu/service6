@@ -344,11 +344,11 @@ async function submitPin() {
   // Simple keyword-based category suggestion
   let cat = STATE.composeCat;
   const lowerText = text.toLowerCase();
-  if (lowerText.match(/食|飲|ランチ|ディナー|旨|美味|カレー|ラーメン|カフェ/)) cat = 'food';
-  else if (lowerText.match(/注意|危|工事|事故|渋滞/)) cat = 'warn';
-  else if (lowerText.match(/遊|楽|ライブ|イベント|祭り/)) cat = 'fun';
-  else if (lowerText.match(/綺麗|景色|スポット|公園|花/)) cat = 'spot';
-  else if (lowerText.match(/便利|スーパー|病院|生活/)) cat = 'life';
+  if (lowerText.match(/食|飲|ランチ|ディナー|旨|美味|カレー|ラーメン|カフェ/)) cat = "food";
+  else if (lowerText.match(/注意|危|工事|事故|渋滞/)) cat = "warn";
+  else if (lowerText.match(/遊|楽|ライブ|イベント|祭り/)) cat = "fun";
+  else if (lowerText.match(/綺麗|景色|スポット|公園|花/)) cat = "spot";
+  else if (lowerText.match(/便利|スーパー|病院|生活/)) cat = "life";
   const pin = await STATE.store.add({
     lat, lng,
     cat: cat,
