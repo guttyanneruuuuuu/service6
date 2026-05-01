@@ -184,16 +184,32 @@ function initUI() {
     trendClose.onclick = () => trendPanel.classList.remove('is-open');
   }
 
+  // Ranking Panel
+  const rankingToggle = document.getElementById('rankingToggle');
+  const rankingPanel = document.getElementById('rankingPanel');
+  const rankingClose = document.getElementById('rankingClose');
+  if (rankingToggle && rankingPanel) {
+    rankingToggle.onclick = () => {
+      renderRanking();
+      rankingPanel.classList.add('is-open');
+    };
+  }
+  if (rankingClose) {
+    rankingClose.onclick = () => rankingPanel.classList.remove('is-open');
+  }
+
   // Share
   const shareX = document.getElementById('shareX');
   if (shareX) {
-    shareX.onclick = () => {
-      const p = STATE.store.get(STATE.selectedPinId);
-      if (!p) return;
-      const text = `Pinlyで街の"今"を発見！「${p.text}」 #Pinly #街の声`;
-      const url = `${location.origin}${location.pathname}?pin=${p.id}`;
-      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
-    };
+    shareX.onclick = () => shareToX();
+  }
+  const shareInstagram = document.getElementById('shareInstagram');
+  if (shareInstagram) {
+    shareInstagram.onclick = () => shareToInstagram();
+  }
+  const shareLine = document.getElementById('shareLine');
+  if (shareLine) {
+    shareLine.onclick = () => shareToLine();
   }
   const copyLink = document.getElementById('copyLink');
   if (copyLink) {
@@ -305,6 +321,7 @@ async function submitPin() {
   
   closeCompose();
   STATE.layer.flyTo(pin);
+  showToast('ピンを刺しました！🎉');
 }
 
 /* ---------------- Detail ---------------- */
@@ -319,7 +336,10 @@ function openDetail(id) {
 function renderDetail(p) {
   const cat = getCategory(p.cat);
   document.getElementById('detailText').textContent = p.text;
-  document.getElementById('detailAuthor').textContent = `${cat.emoji} ${cat.label} • ${p.author.slice(0, 8)}`;
+  
+  const timeStr = formatTime(p.ts);
+  const reactionCount = Object.values(p.reactions).reduce((a, b) => a + b, 0);
+  document.getElementById('detailAuthor').textContent = `${cat.emoji} ${cat.label} • ${timeStr} • 🔥 ${reactionCount}`;
   
   const panel = document.querySelector('.detail__panel');
   if (panel) {
@@ -332,12 +352,40 @@ function closeDetail() {
   STATE.selectedPinId = null;
 }
 
+/* ---------------- Share Functions ---------------- */
+function shareToX() {
+  const p = STATE.store.get(STATE.selectedPinId);
+  if (!p) return;
+  const text = `Pinlyで街の"今"を発見！「${p.text}」 #Pinly #街の声`;
+  const url = `${location.origin}${location.pathname}?pin=${p.id}`;
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
+}
+
+function shareToInstagram() {
+  const p = STATE.store.get(STATE.selectedPinId);
+  if (!p) return;
+  const text = `Pinlyで街の"今"を発見！「${p.text}」 #Pinly #街の声`;
+  // Instagram doesn't have a direct share API, so copy to clipboard and show instructions
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('テキストをコピーしました。Instagramに投稿してください！');
+  });
+}
+
+function shareToLine() {
+  const p = STATE.store.get(STATE.selectedPinId);
+  if (!p) return;
+  const text = `Pinlyで街の"今"を発見！「${p.text}」`;
+  const url = `${location.origin}${location.pathname}?pin=${p.id}`;
+  window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text + '\n' + url)}`);
+}
+
 /* ---------------- Actions ---------------- */
 function locateMe() {
   if (!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition((pos) => {
     const { longitude, latitude } = pos.coords;
     STATE.map.flyTo({ center: [longitude, latitude], zoom: 15 });
+    showToast('現在地に移動しました');
   }, (err) => {
       showToast('現在地を取得できませんでした');
   });
@@ -372,6 +420,14 @@ function formatN(n) {
   return String(n);
 }
 
+function formatTime(ts) {
+  const diff = Math.floor(Date.now() / 1000) - ts;
+  if (diff < 60) return 'たった今';
+  if (diff < 3600) return Math.floor(diff / 60) + '分前';
+  if (diff < 86400) return Math.floor(diff / 3600) + '時間前';
+  return Math.floor(diff / 86400) + '日前';
+}
+
 function renderTrends() {
   const list = document.getElementById('trendList');
   if (!list) return;
@@ -379,24 +435,57 @@ function renderTrends() {
   list.innerHTML = hot.map(p => {
     const cat = getCategory(p.cat);
     const timeStr = formatTime(p.ts);
+    const reactionCount = Object.values(p.reactions).reduce((a, b) => a + b, 0);
     return `
       <div class="trend-item" onclick="window.dispatchEvent(new CustomEvent('flyToPin', {detail: '${p.id}'}))">
         <div class="trend-item__emoji">${cat.emoji}</div>
         <div class="trend-item__content">
           <div class="trend-item__text">${p.text}</div>
-          <div class="trend-item__meta">${cat.label} • ${timeStr} • 🔥 ${Object.values(p.reactions).reduce((a,b)=>a+b,0)}</div>
+          <div class="trend-item__meta">${cat.label} • ${timeStr} • 🔥 ${reactionCount}</div>
         </div>
       </div>
     `;
   }).join('');
 }
 
-function formatTime(ts) {
-  const diff = Math.floor(Date.now() / 1000) - ts;
-  if (diff < 60) return 'たった今';
-  if (diff < 3600) return Math.floor(diff / 60) + '分前';
-  if (diff < 86400) return Math.floor(diff / 3600) + '時間前';
-  return Math.floor(diff / 86400) + '日前';
+function renderRanking() {
+  const list = document.getElementById('rankingList');
+  if (!list) return;
+  
+  // Calculate user stats
+  const userStats = new Map();
+  STATE.store.list().forEach(p => {
+    if (!userStats.has(p.author)) {
+      userStats.set(p.author, { author: p.author, posts: 0, reactions: 0, badge: '' });
+    }
+    const stat = userStats.get(p.author);
+    stat.posts += 1;
+    stat.reactions += Object.values(p.reactions).reduce((a, b) => a + b, 0);
+  });
+  
+  // Assign badges
+  const sorted = Array.from(userStats.values())
+    .sort((a, b) => (b.reactions * 2 + b.posts) - (a.reactions * 2 + a.posts))
+    .slice(0, 15);
+  
+  sorted.forEach((stat, idx) => {
+    if (idx === 0) stat.badge = '🥇';
+    else if (idx === 1) stat.badge = '🥈';
+    else if (idx === 2) stat.badge = '🥉';
+    else if (stat.posts >= 10) stat.badge = '⭐';
+    else if (stat.reactions >= 20) stat.badge = '🔥';
+  });
+  
+  list.innerHTML = sorted.map((stat, idx) => `
+    <div class="ranking-item">
+      <div class="ranking-item__rank">#${idx + 1}</div>
+      <div class="ranking-item__badge">${stat.badge}</div>
+      <div class="ranking-item__content">
+        <div class="ranking-item__author">${stat.author.slice(0, 8)}</div>
+        <div class="ranking-item__stats">投稿: ${stat.posts} • 🔥 ${stat.reactions}</div>
+      </div>
+    </div>
+  `).join('');
 }
 
 window.addEventListener('flyToPin', (e) => {

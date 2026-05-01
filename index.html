@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
   <title>Pinly — 街の"今"が刺さる地図</title>
+  <meta name="description" content="街の今を匿名でシェア。リアルタイムな地図SNS。登録不要・完全匿名・50字制限。">
+  <meta property="og:title" content="Pinly - 街の今が刺さる地図">
+  <meta property="og:description" content="街の今を匿名でシェア。リアルタイムな地図SNS。">
+  <meta property="og:image" content="./og.svg">
+  <meta property="og:url" content="https://guttyanneruuuuuu.github.io/service6/">
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -61,11 +66,23 @@
     </div>
   </div>
 
+  <!-- Ranking Panel -->
+  <div id="rankingPanel" class="ranking-panel">
+    <div class="ranking-panel__header">
+      <span class="ranking-panel__title">🏆 ユーザーランキング</span>
+      <button id="rankingClose" class="ranking-panel__close">×</button>
+    </div>
+    <div id="rankingList" class="ranking-panel__list">
+      <!-- Rankings will be injected here -->
+    </div>
+  </div>
+
   <!-- Strip -->
   <div class="strip">
     <div class="strip__pulse"></div>
     <span><b><span id="stripCount">0</span></b> ピンが刺されています</span>
-    <button id="trendToggle" class="strip__trend-btn">トレンドを見る</button>
+    <button id="trendToggle" class="strip__trend-btn">🔥 トレンド</button>
+    <button id="rankingToggle" class="strip__ranking-btn">🏆 ランキング</button>
   </div>
 
   <!-- Compose Sheet -->
@@ -95,10 +112,13 @@
       <div id="detailAuthor" style="font-size:13px; font-weight:700; opacity:0.6; margin-bottom:12px; color:var(--text-dim);"></div>
       <p id="detailText" style="font-size:20px; font-weight:800; line-height:1.6; color:var(--text); margin:0;"></p>
       
-      <div class="detail__actions" style="margin-top: 20px; display: flex; gap: 10px;">
-        <button id="shareX" class="btn btn--secondary" style="flex: 1; background: #000; color: #fff;">Xでシェア</button>
-        <button id="copyLink" class="btn btn--secondary" style="flex: 1; background: #eee; color: #333;">リンクをコピー</button>
+      <div class="detail__actions" style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button id="shareX" class="btn btn--secondary" style="flex: 1; min-width: 100px; background: #000; color: #fff;">𝕏でシェア</button>
+        <button id="shareInstagram" class="btn btn--secondary" style="flex: 1; min-width: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff;">Instagramに</button>
+        <button id="shareLine" class="btn btn--secondary" style="flex: 1; min-width: 100px; background: #00b900; color: #fff;">LINEで送る</button>
       </div>
+
+      <button id="copyLink" class="btn btn--secondary" style="width:100%; margin-top:10px; background: #eee; color: #333;">リンクをコピー</button>
 
       <button class="btn btn--primary" style="width:100%; margin-top:15px;" data-close-detail>閉じる</button>
     </div>
