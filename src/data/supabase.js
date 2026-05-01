@@ -154,6 +154,14 @@ export function subscribeToSupabasePins(callback) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'pins' }, (payload) => {
       try { callback(payload); } catch (err) { console.warn('[Pinly] realtime cb failed:', err?.message || err); }
     })
-    .subscribe();
+    .on('subscribe', () => {
+      console.log('[Pinly] Realtime subscribed successfully');
+    })
+    .on('error', (err) => {
+      console.warn('[Pinly] Realtime subscription error:', err?.message || err);
+    })
+    .subscribe((status) => {
+      console.log('[Pinly] Realtime subscription status:', status);
+    });
   return activeChannel;
 }
