@@ -110,6 +110,14 @@ export class MarkerLayer {
 
     el.className = 'pinly-marker' + (animate ? ' is-new' : '') + (pin.official ? ' is-official' : '') + ageClass;
     el.style.setProperty('--pin-color', cat.color);
+    
+    // Freshness visual boost
+    const ageSec = pin.ts ? (Date.now() / 1000 - pin.ts) : 0;
+    if (ageSec < 3600) {
+      el.style.filter = 'drop-shadow(0 0 8px var(--pin-color))';
+    }
+    el.style.opacity = Math.max(0.5, 1 - (ageSec / (86400 * 7)));
+
     el.innerHTML = `
       <div class="pinly-marker__inner">
         <div class="pinly-marker__pin"></div>

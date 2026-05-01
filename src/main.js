@@ -170,6 +170,39 @@ function initUI() {
     });
   }
 
+  // Trend Panel
+  const trendToggle = document.getElementById('trendToggle');
+  const trendPanel = document.getElementById('trendPanel');
+  const trendClose = document.getElementById('trendClose');
+  if (trendToggle && trendPanel) {
+    trendToggle.onclick = () => {
+      renderTrends();
+      trendPanel.classList.add('is-open');
+    };
+  }
+  if (trendClose) {
+    trendClose.onclick = () => trendPanel.classList.remove('is-open');
+  }
+
+  // Share
+  const shareX = document.getElementById('shareX');
+  if (shareX) {
+    shareX.onclick = () => {
+      const p = STATE.store.get(STATE.selectedPinId);
+      if (!p) return;
+      const text = `Pinlyで街の"今"を発見！「${p.text}」 #Pinly #街の声`;
+      const url = `${location.origin}${location.pathname}?pin=${p.id}`;
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
+    };
+  }
+  const copyLink = document.getElementById('copyLink');
+  if (copyLink) {
+    copyLink.onclick = () => {
+      const url = `${location.origin}${location.pathname}?pin=${STATE.selectedPinId}`;
+      navigator.clipboard.writeText(url).then(() => showToast('リンクをコピーしました！'));
+    };
+  }
+
   // Esc
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
@@ -253,10 +286,19 @@ async function submitPin() {
   const text = document.getElementById('composeText').value.trim();
   if (!text) return;
   
+  // Simple keyword-based category suggestion
+  let cat = STATE.composeCat;
+  const lowerText = text.toLowerCase();
+  if (lowerText.match(/食|飲|ランチ|ディナー|旨|美味|カレー|ラーメン|カフェ/)) cat = 'food';
+  else if (lowerText.match(/注意|危|工事|事故|渋滞/)) cat = 'warn';
+  else if (lowerText.match(/遊|楽|ライブ|イベント|祭り/)) cat = 'fun';
+  else if (lowerText.match(/綺麗|景色|スポット|公園|花/)) cat = 'spot';
+  else if (lowerText.match(/便利|スーパー|病院|生活/)) cat = 'life';
+
   const [lng, lat] = STATE.composeLngLat;
   const pin = await STATE.store.add({
     lat, lng,
-    cat: STATE.composeCat,
+    cat: cat,
     text,
     loc: '現在地付近'
   });
@@ -329,5 +371,41 @@ function formatN(n) {
   if (n >= 10000) return (n / 10000).toFixed(1) + '万';
   return String(n);
 }
+
+function renderTrends() {
+  const list = document.getElementById('trendList');
+  if (!list) return;
+  const hot = STATE.store.hot(10);
+  list.innerHTML = hot.map(p => {
+    const cat = getCategory(p.cat);
+    const timeStr = formatTime(p.ts);
+    return `
+      <div class="trend-item" onclick="window.dispatchEvent(new CustomEvent('flyToPin', {detail: '${p.id}'}))">
+        <div class="trend-item__emoji">${cat.emoji}</div>
+        <div class="trend-item__content">
+          <div class="trend-item__text">${p.text}</div>
+          <div class="trend-item__meta">${cat.label} • ${timeStr} • 🔥 ${Object.values(p.reactions).reduce((a,b)=>a+b,0)}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function formatTime(ts) {
+  const diff = Math.floor(Date.now() / 1000) - ts;
+  if (diff < 60) return 'たった今';
+  if (diff < 3600) return Math.floor(diff / 60) + '分前';
+  if (diff < 86400) return Math.floor(diff / 3600) + '時間前';
+  return Math.floor(diff / 86400) + '日前';
+}
+
+window.addEventListener('flyToPin', (e) => {
+  const p = STATE.store.get(e.detail);
+  if (p) {
+    STATE.layer.flyTo(p);
+    setTimeout(() => openDetail(p.id), 700);
+    document.getElementById('trendPanel').classList.remove('is-open');
+  }
+});
 
 document.addEventListener('DOMContentLoaded', () => { boot(); });

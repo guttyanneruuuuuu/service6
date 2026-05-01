@@ -50,10 +50,22 @@
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
   </button>
 
+  <!-- Trend Panel -->
+  <div id="trendPanel" class="trend-panel">
+    <div class="trend-panel__header">
+      <span class="trend-panel__title">🔥 今、話題のピン</span>
+      <button id="trendClose" class="trend-panel__close">×</button>
+    </div>
+    <div id="trendList" class="trend-panel__list">
+      <!-- Trends will be injected here -->
+    </div>
+  </div>
+
   <!-- Strip -->
   <div class="strip">
     <div class="strip__pulse"></div>
     <span><b><span id="stripCount">0</span></b> ピンが刺されています</span>
+    <button id="trendToggle" class="strip__trend-btn">トレンドを見る</button>
   </div>
 
   <!-- Compose Sheet -->
@@ -82,7 +94,13 @@
     <div class="detail__panel">
       <div id="detailAuthor" style="font-size:13px; font-weight:700; opacity:0.6; margin-bottom:12px; color:var(--text-dim);"></div>
       <p id="detailText" style="font-size:20px; font-weight:800; line-height:1.6; color:var(--text); margin:0;"></p>
-      <button class="btn btn--primary" style="width:100%; margin-top:25px;" data-close-detail>閉じる</button>
+      
+      <div class="detail__actions" style="margin-top: 20px; display: flex; gap: 10px;">
+        <button id="shareX" class="btn btn--secondary" style="flex: 1; background: #000; color: #fff;">Xでシェア</button>
+        <button id="copyLink" class="btn btn--secondary" style="flex: 1; background: #eee; color: #333;">リンクをコピー</button>
+      </div>
+
+      <button class="btn btn--primary" style="width:100%; margin-top:15px;" data-close-detail>閉じる</button>
     </div>
   </div>
 
