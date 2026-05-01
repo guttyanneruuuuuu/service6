@@ -3,44 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ff1f6d" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14101e" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
   <title>Pinlyとは — Pinly</title>
   <meta name="description" content="Pinly は登録不要・完全匿名・50字制限の地図SNS。街の今を、誰でもピンで共有できます。">
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-  <style>
-    :root { --pink:#ff6b9d; --text:#4a2c40; --text-dim:#7d5a71; --line:rgba(255,107,157,.15); }
-    *{box-sizing:border-box}
-    body{margin:0;padding:0;background:#fdf6ff;color:var(--text);font-family:"Noto Sans JP","Inter",system-ui,sans-serif;line-height:1.8}
-    .container{max-width:780px;margin:0 auto;padding:48px 24px 96px}
-    h1{color:var(--pink);font-size:36px;font-weight:900;margin:0 0 8px;letter-spacing:-.02em}
-    .lead{color:var(--text-dim);font-size:16px;margin:0 0 32px}
-    h2{font-size:22px;font-weight:900;margin:40px 0 12px;color:var(--text)}
-    h3{font-size:16px;font-weight:800;margin:20px 0 8px}
-    p,li{font-size:15px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:16px 0 24px}
-    .card{background:#fff;border:2px solid var(--line);border-radius:24px;padding:20px;box-shadow:0 8px 20px rgba(255,107,157,.08)}
-    .card .emoji{font-size:32px;margin-bottom:8px}
-    .card h3{margin:0 0 8px}
-    .card p{font-size:14px;color:var(--text-dim);margin:0}
-    .back{display:inline-flex;align-items:center;gap:6px;color:var(--pink);text-decoration:none;font-weight:800;margin-bottom:24px}
-    .cta{display:inline-block;margin-top:16px;padding:14px 32px;background:var(--pink);color:#fff;border-radius:100px;font-weight:900;text-decoration:none;box-shadow:0 8px 20px rgba(255,107,157,.3)}
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Noto+Sans+JP:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./page.css">
 </head>
 <body>
-  <div class="container">
-    <a href="./" class="back">← 地図に戻る</a>
-    <h1>Pinlyとは？</h1>
-    <p class="lead">街の "今" を、世界中の誰でも、地図にピン留めできるサービス。</p>
+  <main class="page">
+    <a href="./" class="page__back">← 地図に戻る</a>
+
+    <section class="page__hero">
+      <h1>Pinlyとは？</h1>
+      <p class="lead">街の "今" を、世界中の誰でも、地図にピン留めできるサービス。</p>
+    </section>
 
     <p>Pinly は、登録不要・完全匿名・50字以内で、いま気になる街の出来事をリアルタイムに地図へピン留めできる新しい地図SNSです。あなたの一言が、誰かの「ちょっといい体験」を生み出します。</p>
 
     <h2>特徴</h2>
     <div class="grid">
-      <div class="card"><div class="emoji">🗺️</div><h3>シンプルな地図</h3><p>地図をタップして50字以内でつぶやくだけ。わずらわしい登録もアカウントもなし。</p></div>
-      <div class="card"><div class="emoji">🎭</div><h3>完全匿名</h3><p>名前もメールも不要。ブラウザ内の匿名ID だけで投稿できる気軽さ。</p></div>
-      <div class="card"><div class="emoji">⏱️</div><h3>48時間で消える</h3><p>古い情報は自動で消えるから、地図はいつも "今" の声でいっぱい。</p></div>
-      <div class="card"><div class="emoji">🔥</div><h3>トレンド機能</h3><p>反応が多い "ホットなピン" は自動でトレンドにランクイン。</p></div>
-      <div class="card"><div class="emoji">🛡️</div><h3>荒らし対策</h3><p>誹謗中傷・個人情報・スパムを自動検知。報告機能もワンタップ。</p></div>
-      <div class="card"><div class="emoji">📲</div><h3>PWA対応</h3><p>スマホのホーム画面に追加してアプリのように使えます。</p></div>
+      <div class="card"><span class="emoji">🗺️</span><h3>シンプルな地図</h3><p>地図をタップして50字以内でつぶやくだけ。わずらわしい登録もアカウントもなし。</p></div>
+      <div class="card"><span class="emoji">🎭</span><h3>完全匿名</h3><p>名前もメールも不要。ブラウザ内の匿名IDだけで投稿できる気軽さ。</p></div>
+      <div class="card"><span class="emoji">⏱️</span><h3>48時間で消える</h3><p>古い情報は自動で消えるから、地図はいつも "今" の声でいっぱい。</p></div>
+      <div class="card"><span class="emoji">🔥</span><h3>トレンド機能</h3><p>反応が多い "ホットなピン" は自動でトレンドにランクイン。</p></div>
+      <div class="card"><span class="emoji">🛡️</span><h3>荒らし対策</h3><p>誹謗中傷・個人情報・スパムを自動検知。報告機能もワンタップ。</p></div>
+      <div class="card"><span class="emoji">📲</span><h3>PWA対応</h3><p>スマホのホーム画面に追加してアプリのように使えます。</p></div>
+      <div class="card"><span class="emoji">🏆</span><h3>ランキング & バッジ</h3><p>投稿数や反応数でユーザーをランキング表示。バッジで盛り上げ。</p></div>
+      <div class="card"><span class="emoji">🌗</span><h3>ライト/ダーク</h3><p>時間帯や好みに合わせて選べる、目に優しい2テーマ対応。</p></div>
     </div>
 
     <h2>使い方</h2>
@@ -51,14 +45,34 @@
       <li><b>50字でつぶやく</b>：街にあなたの声を残そう</li>
     </ol>
 
+    <h2>安全への取り組み</h2>
+    <ul>
+      <li>投稿前に <b>誹謗中傷・個人情報・スパム</b> を自動検出してブロック</li>
+      <li>HTTPS による暗号化通信、サニタイズによる XSS 対策</li>
+      <li>投稿は48時間で自動的に消える「忘却仕様」</li>
+      <li>ワンタップ報告で、不適切なピンは即座に非表示</li>
+      <li>同一場所への連続投稿・短時間の大量投稿を制限</li>
+    </ul>
+
     <h2>ビジョン</h2>
     <p>Pinly のコンセプトは「街の "今" が刺さる地図」。Google Maps のような正解情報ではなく、地域の人だからこそ知っている "生の声" を集めるプラットフォームを目指しています。</p>
     <p>将来的には地域コミュニティ、災害情報、観光、地元ビジネスとの連携など、街と人をつなぐハブとして成長させていきます。</p>
 
-    <h2>運営チーム</h2>
+    <h2>運営</h2>
     <p>Pinly は個人開発のプロジェクトです。フィードバックや一緒に育てたい仲間を募集中。<a href="./contact.html">お問い合わせフォーム</a> からご連絡ください。</p>
 
-    <a class="cta" href="./">地図を開く →</a>
-  </div>
+    <div class="cta-section">
+      <h3>さあ、街にピンを刺そう</h3>
+      <p>登録不要・完全無料。あなたの一言が街を彩る。</p>
+      <a class="btn" href="./">地図を開く →</a>
+    </div>
+
+    <nav class="page__footnav" aria-label="フッター">
+      <a href="./">ホーム</a>
+      <a href="./terms.html">利用規約</a>
+      <a href="./privacy.html">プライバシー</a>
+      <a href="./contact.html">お問い合わせ</a>
+    </nav>
+  </main>
 </body>
 </html>

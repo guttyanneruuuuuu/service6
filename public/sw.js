@@ -1,5 +1,5 @@
 /* Pinly Service Worker — オフラインで地図シェルとシードを使えるようにする最低限の SW */
-const VERSION = 'pinly-v3';
+const VERSION = 'pinly-v5';
 const CORE = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const CORE = [
   './favicon.svg',
   './og.svg',
   './pins.json',
+  './page.css',
   './about.html',
   './terms.html',
   './privacy.html',

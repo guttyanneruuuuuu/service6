@@ -104,12 +104,19 @@ export class MarkerLayer {
         } else {
           const el = document.createElement('div');
           el.className = 'pinly-cluster' + (b.n >= 10 ? ' is-large' : '');
-          el.innerHTML = `<span>${b.n > 99 ? '99+' : b.n}</span>`;
+          const span = document.createElement('span');
+          span.textContent = b.n > 99 ? '99+' : String(b.n);
+          el.appendChild(span);
           el.setAttribute('role', 'button');
+          el.setAttribute('tabindex', '0');
           el.setAttribute('aria-label', `${b.n}件のピンが集まっています`);
-          el.addEventListener('click', (e) => {
+          const open = (e) => {
             e.stopPropagation();
             this.onClusterClick && this.onClusterClick({ lat, lng, samples: b.samples });
+          };
+          el.addEventListener('click', open);
+          el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(e); }
           });
           const m = new maplibregl.Marker({ element: el, anchor: 'center' })
             .setLngLat([lng, lat])
@@ -156,16 +163,36 @@ export class MarkerLayer {
       + ageClass;
     el.style.setProperty('--pin-color', cat.color);
 
-    el.innerHTML = `
-      <div class="pinly-marker__inner">
-        <div class="pinly-marker__pin"></div>
-        <span class="pinly-marker__emoji">${cat.emoji}</span>
-        <div class="pinly-marker__label">${escapeHTML(pin.text)}</div>
-      </div>
-    `;
-    el.addEventListener('click', (e) => {
+    // Build DOM with safe text APIs (no innerHTML to defeat XSS)
+    const inner = document.createElement('div');
+    inner.className = 'pinly-marker__inner';
+
+    const pinShape = document.createElement('div');
+    pinShape.className = 'pinly-marker__pin';
+
+    const emojiEl = document.createElement('span');
+    emojiEl.className = 'pinly-marker__emoji';
+    emojiEl.setAttribute('aria-hidden', 'true');
+    emojiEl.textContent = cat.emoji;
+
+    const labelEl = document.createElement('div');
+    labelEl.className = 'pinly-marker__label';
+    labelEl.textContent = pin.text;
+
+    inner.append(pinShape, emojiEl, labelEl);
+    el.appendChild(inner);
+
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('aria-label', `${cat.label}: ${pin.text}`);
+
+    const fire = (e) => {
       e.stopPropagation();
       this.onPinClick && this.onPinClick(pin);
+    };
+    el.addEventListener('click', fire);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fire(e); }
     });
 
     const m = new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [0, 0] })
@@ -185,8 +212,4 @@ export class MarkerLayer {
   }
 }
 
-function escapeHTML(s) {
-  return String(s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
+// escapeHTML removed: marker DOM is now built with safe text APIs only.

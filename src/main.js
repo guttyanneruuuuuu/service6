@@ -1,4 +1,5 @@
 import maplibregl from 'maplibre-gl';
+import './styles/main.css';
 import { getStyleForTheme } from './map/style.js';
 import { MarkerLayer } from './map/markers.js';
 import { PinStore } from './data/store.js';
