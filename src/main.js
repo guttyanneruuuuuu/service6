@@ -3,6 +3,8 @@ import { DARK_STYLE } from './map/style.js';
 import { MarkerLayer } from './map/markers.js';
 import { PinStore } from './data/store.js';
 import { CATEGORIES, CATS_FOR_COMPOSE, getCategory } from './data/categories.js';
+import { analyzeText, getModerationVerdict, containsPersonalInfo } from './data/moderation.js';
+import { checkRateLimit, recordPost } from './data/ratelimit.js';
 
 /* ============================================================
    Pinly main controller
@@ -312,7 +314,30 @@ async function submitPin() {
   const text = document.getElementById('composeText').value.trim();
   if (!text) return;
 
+  if (containsPersonalInfo(text)) {
+    showToast('個人情報は投稿できません。');
+    return;
+  }
+
+  const verdict = getModerationVerdict(text);
+  if (verdict.status === 'rejected') {
+    showToast(verdict.message);
+    return;
+  } else if (verdict.status === 'warning') {
+    if (!confirm(verdict.message + '\nそれでも投稿しますか？')) {
+      return;
+    }
+  }
+
   if (!confirm('この内容で投稿しますか？\n※誹謗中傷や個人を特定する情報は禁止されています。')) {
+    return;
+  }
+  
+  // Check rate limit
+  const [lng, lat] = STATE.composeLngLat;
+  const rateLimitCheck = checkRateLimit(lat, lng, STATE.store.self.id);
+  if (!rateLimitCheck.allowed) {
+    showToast(rateLimitCheck.reason);
     return;
   }
   
@@ -332,6 +357,9 @@ async function submitPin() {
     text,
     loc: '現在地付近'
   });
+  
+  // Record for rate limiting
+  recordPost(lat, lng, STATE.store.self.id);
   
   closeCompose();
   STATE.layer.flyTo(pin);
