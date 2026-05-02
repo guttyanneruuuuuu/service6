@@ -3,33 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ff1f6d" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14101e" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
   <title>プライバシーポリシー — Pinly</title>
   <meta name="robots" content="noindex">
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-  <style>
-    :root { --pink:#ff6b9d; --text:#4a2c40; --text-dim:#7d5a71; --line:rgba(255,107,157,.15); }
-    *{box-sizing:border-box}
-    body{margin:0;padding:0;background:#fdf6ff;color:var(--text);font-family:"Noto Sans JP","Inter",system-ui,sans-serif;line-height:1.8;-webkit-font-smoothing:antialiased}
-    .container{max-width:760px;margin:0 auto;padding:48px 24px 96px}
-    h1{color:var(--pink);font-size:32px;font-weight:900;margin:0 0 8px;letter-spacing:-.02em}
-    .lead{color:var(--text-dim);font-size:14px;margin:0 0 32px}
-    h2{font-size:18px;font-weight:800;margin:36px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--line)}
-    p,li{font-size:15px}
-    ul{padding-left:20px}
-    .back{display:inline-flex;align-items:center;gap:6px;color:var(--pink);text-decoration:none;font-weight:800;margin-bottom:24px}
-    .back:hover{text-decoration:underline}
-    .meta{margin-top:48px;padding-top:24px;border-top:1px solid var(--line);color:var(--text-dim);font-size:13px}
-    .badge{display:inline-block;background:var(--pink);color:#fff;padding:2px 10px;border-radius:100px;font-size:11px;font-weight:800;margin-right:6px}
-    table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px}
-    th,td{border:1px solid var(--line);padding:8px 12px;text-align:left}
-    th{background:#fff5fa;font-weight:800}
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Noto+Sans+JP:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./page.css">
 </head>
 <body>
-  <div class="container">
-    <a href="./" class="back">← 地図に戻る</a>
-    <h1>プライバシーポリシー</h1>
-    <p class="lead">最終更新日: 2026年5月1日</p>
+  <main class="page">
+    <a href="./" class="page__back">← 地図に戻る</a>
+
+    <section class="page__hero">
+      <h1>プライバシーポリシー</h1>
+      <p class="lead">最終更新日: 2026年5月1日 (v1.2)</p>
+    </section>
 
     <p>Pinly運営（以下「当運営」）は、Pinly（以下「本サービス」）におけるユーザーの個人情報の取り扱いについて、以下のとおりプライバシーポリシー（以下「本ポリシー」）を定めます。</p>
 
@@ -49,6 +41,15 @@
       <li>第三者の広告ネットワーク、トラッキングクッキー等は使用していません。</li>
     </ul>
 
+    <h2>2-2. アクセス解析について</h2>
+    <p>本サービスの利用状況を把握し、サービス改善のために、Google Analytics（GA4）を使用しています。</p>
+    <ul>
+      <li>Google Analyticsは、個人を特定しない化名データのみを収集します。</li>
+      <li>収集される情報は、ページビュー数、セッション数、ユーザー数、地理的位置（国、都道府県等）、デバイス情報、ブラウザ情報などです。</li>
+      <li>Google Analyticsの詳細については、<a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Googleのプライバシーポリシー</a>をご参照ください。</li>
+      <li>Google Analyticsの追跡を無効にしたい場合は、<a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">Google Analytics オプトアウトブラウザアドオン</a>をご利用ください。</li>
+    </ul>
+
     <h2>3. データの保存場所</h2>
     <ul>
       <li>ユーザーの設定、デバイスID、レート制限履歴等は、ユーザー自身のブラウザの localStorage にのみ保存されます。</li>
@@ -64,13 +65,15 @@
     </ul>
 
     <h2>5. Cookie・ローカルストレージ</h2>
-    <p>本サービスは、ユーザー体験向上のためにブラウザのローカルストレージを使用します。Cookie は使用していません。ローカルストレージの内容はユーザー自身でブラウザの設定からいつでも削除できます。</p>
+    <p>本サービスは、ユーザー体験向上のためにブラウザのローカルストレージ及び Service Worker のキャッシュ領域を使用します。Cookie は使用していません。これらの内容はユーザー自身でブラウザの設定からいつでも削除できます。本サービスのメニューから「ローカルデータをクリア」ボタンでも削除可能です。</p>
 
     <h2>6. セキュリティ</h2>
     <ul>
       <li>本サービスは HTTPS による暗号化通信で提供されます。</li>
-      <li>投稿テキストはサーバ側・クライアント側で適切にサニタイズされ、XSS 等の攻撃を防止します。</li>
+      <li>投稿テキストはクライアント側で適切にサニタイズされ、XSS 等の攻撃を防止します。</li>
       <li>投稿前に簡易的なコンテンツ検査を行い、明らかな誹謗中傷・個人情報を含む投稿はブロックします。</li>
+      <li>Content Security Policy (CSP)、X-Content-Type-Options、Referrer-Policy 等のセキュリティヘッダを設定しています。</li>
+      <li>レート制限により、短時間の大量投稿・連続投稿を防止します。</li>
     </ul>
 
     <h2>7. 削除依頼・開示請求</h2>
@@ -86,8 +89,15 @@
     <p>本ポリシーに関するお問い合わせは <a href="./contact.html">お問い合わせフォーム</a> までご連絡ください。</p>
 
     <div class="meta">
-      <span class="badge">v1.0</span>制定日: 2026年5月1日
+      <span class="badge">v1.1</span>制定日: 2026年5月1日
     </div>
-  </div>
+
+    <nav class="page__footnav" aria-label="フッター">
+      <a href="./">ホーム</a>
+      <a href="./about.html">Pinly とは</a>
+      <a href="./terms.html">利用規約</a>
+      <a href="./contact.html">お問い合わせ</a>
+    </nav>
+  </main>
 </body>
 </html>

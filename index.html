@@ -3,72 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <meta name="theme-color" content="#ff6b9d">
+  <meta name="theme-color" content="#ff1f6d" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14101e" media="(prefers-color-scheme: dark)">
   <meta name="color-scheme" content="light dark">
 
-  <title>Pinly — 街の &quot;今&quot; が刺さる地図</title>
-  <meta name="description" content="登録不要・完全匿名・50字制限の地図SNS。街のいまをピン留めしてシェアしよう。">
-  <meta name="keywords" content="Pinly,地図,SNS,匿名,リアルタイム,ピン,街,今,投稿">
+  <!-- Security headers (meta-form) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://esm.sh https://www.googletagmanager.com; script-src-elem 'self' 'unsafe-inline' https://esm.sh https://www.googletagmanager.com; connect-src 'self' https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org https://*.supabase.co wss://*.supabase.co https://esm.sh https://www.google-analytics.com; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(self), microphone=(), camera=(), interest-cohort=(), payment=(), usb=()">
+
+  <title>Pinly Beta — 街の "今" が刺さる地図 📍</title>
+  <meta name="description" content="登録不要・完全匿名・50字制限の地図SNS。街のいまをピン留めしてシェアしよう。リアルタイムに浮かぶ&quot;街の声&quot;を地図で発見できます。">
+  <meta name="keywords" content="Pinly,地図,SNS,匿名,リアルタイム,ピン,街,今,投稿,グルメ,穴場">
   <meta name="author" content="Pinly Team">
+  <meta name="robots" content="index, follow">
 
   <!-- OGP -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Pinly — 街の &quot;今&quot; が刺さる地図">
-  <meta property="og:description" content="登録不要・完全匿名・50字。街のいまをピン留めしてシェアできる地図SNS。">
-  <meta property="og:image" content="./og.svg">
+  <meta property="og:description" content="登録不要・匿名・50字。街のいまをピン留めしてシェアできる地図SNS。">
+  <meta property="og:image" content="https://guttyanneruuuuuu.github.io/service6/favicon.svg">
   <meta property="og:url" content="https://guttyanneruuuuuu.github.io/service6/">
   <meta property="og:site_name" content="Pinly">
   <meta property="og:locale" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Pinly — 街の &quot;今&quot; が刺さる地図">
-  <meta name="twitter:description" content="登録不要・完全匿名・50字。街のいまをピン留めしてシェアできる地図SNS。">
-  <meta name="twitter:image" content="./og.svg">
+  <meta name="twitter:description" content="登録不要・匿名・50字。街のいまをピン留めしてシェアできる地図SNS。">
+  <meta name="twitter:image" content="https://guttyanneruuuuuu.github.io/service6/favicon.svg">
 
   <!-- Icons & PWA -->
-  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-  <link rel="apple-touch-icon" href="./favicon.svg">
-  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/service6/favicon.svg">
+  <link rel="apple-touch-icon" href="/service6/favicon.svg">
+  <link rel="manifest" href="/service6/manifest.webmanifest">
+  <link rel="canonical" href="https://guttyanneruuuuuu.github.io/service6/">
 
   <!-- Preconnect -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://a.basemaps.cartocdn.com">
   <link rel="preconnect" href="https://b.basemaps.cartocdn.com">
-  <link rel="preconnect" href="https://c.basemaps.cartocdn.com">
-  <link rel="preconnect" href="https://d.basemaps.cartocdn.com">
+  <link rel="preconnect" href="https://esm.sh">
+  <link rel="dns-prefetch" href="https://c.basemaps.cartocdn.com">
+  <link rel="dns-prefetch" href="https://d.basemaps.cartocdn.com">
+  <link rel="dns-prefetch" href="https://ebpkewkqorvditwhgzuh.supabase.co">
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Noto+Sans+JP:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
-  <script type="module" crossorigin src="/service6/assets/index-H919NJJx.js"></script>
-  <link rel="modulepreload" crossorigin href="/service6/assets/maplibre-x67qOzbu.js">
-  <link rel="stylesheet" crossorigin href="/service6/assets/index-Y0enAj6D.css">
+
+  <!-- Google Analytics (GA4) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-3ZSXF6C3V6"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-3ZSXF6C3V6');
+  </script>
+
+  <!-- Supabase config -->
+  <script>
+    window.PINLY_SUPABASE = {
+      url: 'https://ebpkewkqorvditwhgzuh.supabase.co',
+      key: 'sb_publishable_hH1Z65DBq4Zg0kVFSy-CuA_9BC1uuYS'
+    };
+  </script>
+
+  <!-- Vite entry point -->
+  <script type="module" crossorigin src="/service6/assets/index-icJgRtel.js"></script>
+  <link rel="modulepreload" crossorigin href="/service6/assets/maplibre-BD93s8Mz.js">
+  <link rel="stylesheet" crossorigin href="/service6/assets/index-DEe6CRa8.css">
 </head>
 <body>
 
-  <!-- Boot -->
+  <!-- Boot screen -->
   <div id="boot" class="boot" role="status" aria-live="polite" aria-label="読み込み中">
     <div class="boot__logo" aria-hidden="true"></div>
     <div class="boot__text">街の声を集めています…</div>
   </div>
 
-  <!-- Map -->
+  <!-- Map canvas -->
   <div id="map" class="map" role="application" aria-label="ピン地図"></div>
 
   <!-- App Bar -->
   <header class="appbar">
     <button class="appbar__brand" id="brandBtn" title="Pinly について" aria-label="Pinly について">
       <span class="appbar__logo" aria-hidden="true"></span>
-      <span class="appbar__name">Pinly</span>
+      <span class="appbar__name">Pinly <span style="font-size:0.5em;opacity:0.7;margin-left:4px">Beta</span></span>
     </button>
     <div class="appbar__search" role="search">
       <span class="appbar__search-icon" aria-hidden="true">🔎</span>
-      <input type="text" id="searchInput" placeholder="ピンを検索…" aria-label="ピンを検索" autocomplete="off">
+      <input type="text" id="searchInput" placeholder="ピンを検索…" aria-label="ピンを検索" autocomplete="off" maxlength="80" inputmode="search">
       <button id="searchClear" class="appbar__search-clear" hidden aria-label="検索をクリア">×</button>
     </div>
     <div class="appbar__actions">
       <button id="themeBtn" class="iconbtn" title="テーマ切替" aria-label="ライト/ダークテーマ切替">🌗</button>
       <button id="locateBtn" class="iconbtn" title="現在地" aria-label="現在地に移動">📍</button>
-      <button id="menuBtn" class="iconbtn" title="メニュー" aria-label="メニューを開く">≡</button>
+      <button id="menuBtn" class="iconbtn" title="メニュー" aria-label="メニューを開く" aria-haspopup="dialog">≡</button>
     </div>
   </header>
 
@@ -82,6 +112,16 @@
     <div class="targetcross__hint">この地点でOK？ 下の決定ボタンを押してね</div>
   </div>
 
+  <!-- Bottom strip (live counter) -->
+  <div id="strip" class="strip" role="status" aria-live="polite">
+    <span class="strip__pulse" aria-hidden="true"></span>
+    <span>表示中 <b id="stripCount">0</b></span>
+    <span class="strip__sep">/</span>
+    <span>全 <b id="stripTotal">0</b> 件</span>
+    <button id="trendToggle" class="strip__btn" type="button">🔥 トレンド</button>
+    <button id="rankingToggle" class="strip__btn" type="button">🏆 ランキング</button>
+  </div>
+
   <!-- FAB -->
   <button id="fab" class="fab" title="ピンを刺す" aria-label="ピンを刺す">
     <svg class="fab__add" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -89,169 +129,123 @@
   </button>
 
   <!-- Trend Panel -->
-  <aside id="trendPanel" class="side-panel side-panel--left" aria-label="トレンドピン">
+  <aside id="trendPanel" class="side-panel side-panel--left" aria-label="トレンドピン" aria-hidden="true">
     <div class="side-panel__header">
       <span class="side-panel__title">🔥 今、話題のピン</span>
-      <button class="side-panel__close" data-close-panel="trendPanel" aria-label="閉じる">×</button>
+      <button class="side-panel__close" data-close-panel="trendPanel" aria-label="パネルを閉じる">×</button>
     </div>
-    <div id="trendList" class="side-panel__list"></div>
+    <div id="trendList" class="side-panel__content"></div>
   </aside>
 
   <!-- Ranking Panel -->
-  <aside id="rankingPanel" class="side-panel side-panel--right" aria-label="ユーザーランキング">
+  <aside id="rankingPanel" class="side-panel side-panel--right" aria-label="ユーザーランキング" aria-hidden="true">
     <div class="side-panel__header">
       <span class="side-panel__title">🏆 ユーザーランキング</span>
-      <button class="side-panel__close" data-close-panel="rankingPanel" aria-label="閉じる">×</button>
+      <button class="side-panel__close" data-close-panel="rankingPanel" aria-label="パネルを閉じる">×</button>
     </div>
-    <div id="rankingList" class="side-panel__list"></div>
+    <div id="rankingList" class="side-panel__content"></div>
   </aside>
 
-  <!-- Strip -->
-  <div class="strip" role="status">
-    <div class="strip__pulse" aria-hidden="true"></div>
-    <span><b><span id="stripCount">0</span></b> ピン表示中</span>
-    <span class="strip__sep">/</span>
-    <span>全 <b><span id="stripTotal">0</span></b></span>
-    <button id="trendToggle" class="strip__btn strip__btn--pink">🔥 トレンド</button>
-    <button id="rankingToggle" class="strip__btn strip__btn--blue">🏆 ランキング</button>
+  <!-- Detail Sheet -->
+  <div id="detail" class="sheet detail" hidden role="dialog" aria-modal="true" aria-label="ピン詳細">
+    <div class="sheet__panel detail__panel">
+      <button class="sheet__close" data-close-detail aria-label="閉じる">×</button>
+      <div class="detail__head">
+        <span id="detailCatEmoji" class="detail__cat-emoji" aria-hidden="true">📍</span>
+        <span id="detailCatLabel" class="detail__cat-label">その他</span>
+      </div>
+      <h2 id="detailTitle" class="detail__title"></h2>
+      <p id="detailMeta" class="detail__meta"></p>
+      <div id="detailReactions" class="detail__reactions"></div>
+      <div class="detail__share">
+        <button id="shareX" class="btn btn--mute" type="button">𝕏 にシェア</button>
+        <button id="shareLine" class="btn btn--mute" type="button">LINE</button>
+        <button id="shareInstagram" class="btn btn--mute" type="button">IG コピー</button>
+        <button id="copyLink" class="btn btn--mute" type="button">🔗 リンク</button>
+      </div>
+      <div class="detail__actions">
+        <button id="reportPin" class="btn btn--ghost" type="button">⚠️ この投稿を報告する</button>
+        <button id="deleteOwnPin" class="btn btn--ghost" type="button" hidden>🗑️ 削除</button>
+      </div>
+    </div>
   </div>
 
   <!-- Compose Sheet -->
-  <div id="composeSheet" class="sheet" hidden role="dialog" aria-labelledby="composeTitle" aria-modal="true">
-    <div class="sheet__overlay" data-close-compose></div>
+  <div id="composeSheet" class="sheet compose" hidden role="dialog" aria-modal="true" aria-label="ピン投稿">
     <div class="sheet__panel">
-      <div class="sheet__handle" aria-hidden="true"></div>
-      <h2 id="composeTitle" class="sheet__title">ピンを刺す</h2>
-      <p class="sheet__sub" id="composeLocLabel">📍 場所を選んでね</p>
-
-      <div class="sheet__section">
-        <p class="sheet__label">カテゴリー</p>
-        <div id="composeCatSelector" class="catbar catbar--inline"></div>
+      <button class="sheet__close" data-close-compose aria-label="閉じる">×</button>
+      <h2 class="compose__title">街にピンを刺す 📍</h2>
+      <p id="composeLocLabel" class="compose__loc"></p>
+      <nav id="composeCatSelector" class="catbar catbar--inline" role="radiogroup" aria-label="カテゴリーを選択"></nav>
+      <label for="composeText" class="compose__label">いまの声を50字で</label>
+      <textarea id="composeText" class="compose__text" maxlength="50" placeholder="ここに行列ができてる…！" inputmode="text" autocomplete="off"></textarea>
+      <div class="compose__foot">
+        <span id="composeCount" class="compose__count">0 / 50</span>
+        <button id="composeSend" class="btn btn--pink" type="button">投稿する 🎯</button>
       </div>
+      <p class="compose__note">※ 投稿は <b>48時間で自動的に消えます</b>。誹謗中傷・個人情報は禁止。</p>
+    </div>
+  </div>
 
-      <div class="sheet__section">
-        <p class="sheet__label">あなたの一言（50字以内）</p>
-        <textarea id="composeText" placeholder="今、ここで何が起きてる？" maxlength="50" rows="3" aria-label="投稿テキスト"></textarea>
-        <div class="sheet__counter">
-          <span id="composeCount">0 / 50</span>
-          <span class="sheet__hint">※ 個人情報・誹謗中傷は禁止</span>
-        </div>
+  <!-- Menu -->
+  <div id="menu" class="sheet menu" hidden role="dialog" aria-modal="true" aria-label="メニュー">
+    <div class="sheet__panel">
+      <button class="sheet__close" data-close-menu aria-label="閉じる">×</button>
+      <h2 class="menu__title">メニュー</h2>
+      <div class="menu__user">
+        <span>あなた: <b id="menuUserId">匿名</b></span>
+        <span id="menuUserStat" class="menu__userstat"></span>
       </div>
-
-      <div class="sheet__actions">
-        <button class="btn btn--ghost" data-close-compose>キャンセル</button>
-        <button id="composeSend" class="btn btn--primary">投稿する 🎯</button>
+      <div class="menu__list">
+        <button id="menuMyPins" class="menu__item" type="button"><span aria-hidden="true">📌</span> 自分のピン一覧</button>
+        <button id="menuTrend" class="menu__item" type="button"><span aria-hidden="true">🔥</span> トレンド</button>
+        <button id="menuRanking" class="menu__item" type="button"><span aria-hidden="true">🏆</span> ランキング</button>
+        <button id="menuTutorial" class="menu__item" type="button"><span aria-hidden="true">💡</span> 使い方</button>
+        <button id="menuShare" class="menu__item" type="button"><span aria-hidden="true">📣</span> Pinlyを紹介</button>
+        <a class="menu__item" href="./about.html"><span aria-hidden="true">ℹ️</span> Pinlyとは</a>
+        <a class="menu__item" href="./terms.html"><span aria-hidden="true">📜</span> 利用規約</a>
+        <a class="menu__item" href="./privacy.html"><span aria-hidden="true">🔐</span> プライバシー</a>
+        <a class="menu__item" href="./contact.html"><span aria-hidden="true">✉️</span> お問い合わせ</a>
+        <button id="menuClear" class="menu__item menu__item--danger" type="button"><span aria-hidden="true">🧹</span> ローカルデータを削除</button>
       </div>
     </div>
   </div>
 
-  <!-- Detail Modal -->
-  <div id="detail" class="detail" hidden role="dialog" aria-labelledby="detailTitle" aria-modal="true">
-    <div class="detail__overlay" data-close-detail></div>
-    <div class="detail__panel">
-      <button class="detail__close" data-close-detail aria-label="閉じる">×</button>
-
-      <div class="detail__cathead">
-        <span id="detailCatEmoji" class="detail__cat-emoji">📍</span>
-        <div>
-          <div id="detailCatLabel" class="detail__cat-label">カテゴリー</div>
-          <div id="detailMeta" class="detail__meta">時間 ・ 場所</div>
-        </div>
-      </div>
-
-      <p id="detailTitle" class="detail__text"></p>
-
-      <div id="detailReactions" class="reactions" aria-label="リアクション"></div>
-
-      <div class="detail__actions">
-        <button id="shareX" class="share-btn share-btn--x" title="Xでシェア" aria-label="Xでシェア">
-          <span class="share-btn__icon">𝕏</span><span>X</span>
-        </button>
-        <button id="shareLine" class="share-btn share-btn--line" title="LINEで送る" aria-label="LINEで送る">
-          <span class="share-btn__icon">💬</span><span>LINE</span>
-        </button>
-        <button id="shareInstagram" class="share-btn share-btn--ig" title="Instagram" aria-label="Instagram用にコピー">
-          <span class="share-btn__icon">📷</span><span>IG</span>
-        </button>
-        <button id="copyLink" class="share-btn share-btn--copy" title="リンクをコピー" aria-label="リンクをコピー">
-          <span class="share-btn__icon">🔗</span><span>コピー</span>
-        </button>
-      </div>
-
-      <button id="reportPin" class="btn--report" type="button">⚠️ この投稿を報告する</button>
-      <button id="deleteOwnPin" class="btn--report" type="button" hidden>🗑️ 自分の投稿を削除</button>
+  <!-- My Pins -->
+  <div id="myPins" class="sheet mypins" hidden role="dialog" aria-modal="true" aria-label="自分のピン一覧">
+    <div class="sheet__panel">
+      <button class="sheet__close" data-close-mypins aria-label="閉じる">×</button>
+      <h2 class="mypins__title">自分のピン <span id="myPinsCount" class="mypins__count">0 件</span></h2>
+      <div id="myPinsList" class="mypins__list"></div>
     </div>
   </div>
 
-  <!-- Intro -->
-  <div id="intro" class="intro" hidden role="dialog" aria-labelledby="introTitle" aria-modal="true">
-    <div class="intro__overlay"></div>
-    <div class="intro__panel">
-      <div class="intro__logo" aria-hidden="true"></div>
-      <h2 id="introTitle" class="intro__title">Pinly へようこそ</h2>
-      <p class="intro__text">街の "今" を匿名でシェアしよう。<br>登録不要 ・ 50字 ・ 48時間で消える</p>
-      <ul class="intro__list">
-        <li><b>1.</b> ＋ ボタンで地図に位置を合わせる</li>
-        <li><b>2.</b> カテゴリーを選んで50字でつぶやく</li>
-        <li><b>3.</b> 反応や報告でみんなと街を育てる</li>
+  <!-- Intro Modal -->
+  <div id="intro" class="sheet intro" hidden role="dialog" aria-modal="true" aria-label="はじめに">
+    <div class="sheet__panel">
+      <h2 class="intro__title">Pinly へようこそ📍</h2>
+      <p class="intro__lead">
+        街の "今" を、登録不要・完全匿名・50字以内でピン留めできる地図SNSです。
+      </p>
+      <ul class="intro__points">
+        <li>📍 地図の「+」ボタンから、いまの場所をピン留め</li>
+        <li>🔥 反応・トレンドで盛り上がるピンを発見</li>
+        <li>⏱️ 投稿は <b>48時間で自動的に消えます</b></li>
+        <li>🛡️ 誹謗中傷・個人情報は禁止です</li>
       </ul>
-      <label class="intro__check">
-        <input type="checkbox" id="introAgree" checked>
-        <span><a href="./terms.html" target="_blank" rel="noopener">利用規約</a> と <a href="./privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a> に同意します</span>
+      <label class="intro__agree">
+        <input id="introAgree" type="checkbox">
+        <span>
+          <a href="./terms.html" target="_blank" rel="noopener">利用規約</a> と
+          <a href="./privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a> に同意します
+        </span>
       </label>
-      <button id="introGo" class="btn btn--primary intro__cta">はじめる ✨</button>
-    </div>
-  </div>
-
-  <!-- Menu Drawer -->
-  <div id="menu" class="menu" hidden role="dialog" aria-modal="true" aria-labelledby="menuTitle">
-    <div class="menu__overlay" data-close-menu></div>
-    <div class="menu__panel">
-      <div class="menu__header">
-        <h2 id="menuTitle" class="menu__title">メニュー</h2>
-        <button class="menu__close" data-close-menu aria-label="閉じる">×</button>
-      </div>
-      <div class="menu__body">
-        <div class="menu__user">
-          <div class="menu__avatar" id="menuAvatar">😊</div>
-          <div>
-            <div class="menu__userid" id="menuUserId">--</div>
-            <div class="menu__userstat" id="menuUserStat">0 投稿 ・ 0 反応</div>
-          </div>
-        </div>
-
-        <button class="menu__item" id="menuMyPins"><span>📌</span> 自分のピン一覧</button>
-        <button class="menu__item" id="menuTrend"><span>🔥</span> トレンドを見る</button>
-        <button class="menu__item" id="menuRanking"><span>🏆</span> ランキングを見る</button>
-        <button class="menu__item" id="menuTutorial"><span>💡</span> 使い方を見る</button>
-        <button class="menu__item" id="menuShare"><span>📣</span> Pinly をシェア</button>
-        <a class="menu__item" href="./about.html"><span>ℹ️</span> Pinly とは</a>
-        <a class="menu__item" href="./terms.html"><span>📜</span> 利用規約</a>
-        <a class="menu__item" href="./privacy.html"><span>🔒</span> プライバシー</a>
-        <a class="menu__item" href="./contact.html"><span>✉️</span> お問い合わせ</a>
-        <button class="menu__item menu__item--danger" id="menuClear"><span>🧹</span> ローカルデータをクリア</button>
-
-        <div class="menu__footer">
-          <span>Pinly v1.0 · </span>
-          <a href="https://github.com/guttyanneruuuuuu/service6" target="_blank" rel="noopener">GitHub</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- My Pins Modal -->
-  <div id="myPins" class="detail" hidden role="dialog" aria-modal="true" aria-labelledby="myPinsTitle">
-    <div class="detail__overlay" data-close-mypins></div>
-    <div class="detail__panel">
-      <button class="detail__close" data-close-mypins aria-label="閉じる">×</button>
-      <h2 id="myPinsTitle" class="detail__cat-label" style="font-size:22px;font-weight:900;color:var(--pink);margin-bottom:4px">📌 自分のピン</h2>
-      <p class="detail__meta" id="myPinsCount">0 件</p>
-      <div id="myPinsList" class="my-pins__list"></div>
+      <button id="introGo" class="btn btn--pink btn--block" type="button">はじめる 🚀</button>
     </div>
   </div>
 
   <!-- Toast -->
-  <div id="toast" class="toast" hidden role="alert" aria-live="assertive"></div>
+  <div id="toast" class="toast" role="alert" aria-live="polite" hidden></div>
 
 </body>
 </html>
