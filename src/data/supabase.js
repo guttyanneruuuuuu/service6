@@ -18,8 +18,11 @@ const STORAGE_KEY = 'pinly.supabase.config';
 
 let supabaseClient = null;
 let activeChannel = null;
+let channelJoined = false;
 let reconnectTimer = null;
+let pendingBroadcasts = [];
 const RECONNECT_INTERVAL = 5000; // 5 seconds
+const MAX_PENDING_BROADCASTS = 32;
 
 /** Validate URL is a legitimate Supabase https endpoint. */
 function isValidSupabaseUrl(url) {
@@ -155,67 +158,90 @@ function attemptReconnect(callback) {
   }, RECONNECT_INTERVAL);
 }
 
+function flushPendingBroadcasts() {
+  if (!activeChannel || !channelJoined) return;
+  const queued = pendingBroadcasts.splice(0, pendingBroadcasts.length);
+  for (const msg of queued) {
+    try {
+      activeChannel.send(msg);
+      console.log('[Pinly] Flushed queued broadcast:', msg.payload?.eventType, msg.payload?.new?.id);
+    } catch (err) {
+      console.warn('[Pinly] flush broadcast failed:', err?.message || err);
+    }
+  }
+}
+
 export function subscribeToSupabasePins(callback) {
   if (!supabaseClient) return null;
   if (activeChannel) {
     try { supabaseClient.removeChannel(activeChannel); } catch {}
+    activeChannel = null;
+    channelJoined = false;
   }
-  
+
   // Hybrid approach: Use Broadcast for guaranteed delivery + Postgres changes as fallback
   activeChannel = supabaseClient
     .channel('pins-sync', {
       config: {
-        broadcast: { self: true },
+        broadcast: { self: false, ack: false },
       },
     })
     // Broadcast mode: Direct peer-to-peer (not affected by RLS)
     .on('broadcast', { event: 'pin_change' }, (payload) => {
-      try { 
-        callback(payload.payload); 
-      } catch (err) { 
-        console.warn('[Pinly] broadcast cb failed:', err?.message || err); 
+      try {
+        callback(payload.payload);
+      } catch (err) {
+        console.warn('[Pinly] broadcast cb failed:', err?.message || err);
       }
     })
     // Fallback: Postgres changes (for initial load and DB-level updates)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'pins' }, (payload) => {
-      try { 
-        callback(payload); 
-      } catch (err) { 
-        console.warn('[Pinly] postgres_changes cb failed:', err?.message || err); 
+      try {
+        callback(payload);
+      } catch (err) {
+        console.warn('[Pinly] postgres_changes cb failed:', err?.message || err);
       }
     })
-    .on('subscribe', () => {
-      console.log('[Pinly] Realtime subscribed successfully (Broadcast + Postgres)');
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-    })
-    .on('error', (err) => {
-      console.warn('[Pinly] Realtime subscription error:', err?.message || err);
-      attemptReconnect(callback);
-    })
-    .subscribe((status) => {
+    .subscribe((status, err) => {
       console.log('[Pinly] Realtime subscription status:', status);
-      if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+      if (status === 'SUBSCRIBED') {
+        channelJoined = true;
+        if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+        flushPendingBroadcasts();
+      } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        channelJoined = false;
+        if (err) console.warn('[Pinly] Realtime error:', err?.message || err);
         attemptReconnect(callback);
       }
     });
-  
+
   return activeChannel;
 }
 
 // Broadcast a pin change to all connected clients
 export function broadcastPinChange(eventType, pin) {
   if (!supabaseClient || !activeChannel) return false;
+  const msg = {
+    type: 'broadcast',
+    event: 'pin_change',
+    payload: {
+      eventType,
+      new: pin,
+      old: null,
+    },
+  };
+  // If the channel hasn't joined yet, queue and flush on SUBSCRIBED.
+  if (!channelJoined) {
+    if (pendingBroadcasts.length >= MAX_PENDING_BROADCASTS) {
+      pendingBroadcasts.shift();
+    }
+    pendingBroadcasts.push(msg);
+    console.log('[Pinly] Broadcast queued (channel not joined yet):', eventType, pin?.id);
+    return true;
+  }
   try {
-    activeChannel.send({
-      type: 'broadcast',
-      event: 'pin_change',
-      payload: {
-        eventType,
-        new: pin,
-        old: null,
-      },
-    });
-    console.log('[Pinly] Broadcasted:', eventType, pin.id);
+    activeChannel.send(msg);
+    console.log('[Pinly] Broadcasted:', eventType, pin?.id);
     return true;
   } catch (err) {
     console.warn('[Pinly] broadcast failed:', err?.message || err);
