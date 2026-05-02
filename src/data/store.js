@@ -1,25 +1,5 @@
 /**
  * Pinly data store.
- *
- * Layered storage:
- *   1. Supabase        — persistent cloud + realtime fan-out across devices.
- *   2. localStorage    — durable per-device cache (also works fully offline).
- *   3. BroadcastChannel — instant cross-tab sync within the same browser.
- *   4. Seed JSON        — public/pins.json bootstrap so a fresh visit is not empty.
- *
- * Pin schema (in-memory):
- *   {
- *     id, lat, lng, cat, text, ts, loc, author,
- *     reactions: { emoji: count },
- *     myReactions: string[],   // device-local only, never sent to DB
- *     official: boolean,
- *     _reported: boolean,
- *     _reportCount: number,
- *     _hidden: boolean,
- *   }
- *
- * NOTE: The Supabase `pins` table uses lowercase columns and does NOT have
- * a `myReactions` column — supabase.js strips that field before INSERT/UPDATE.
  */
 
 import {
@@ -29,14 +9,13 @@ import {
   updatePinInSupabase,
   deletePinFromSupabase,
   subscribeToSupabasePins,
+  broadcastPinChange
 } from './supabase.js';
 
 const LS_KEY    = 'pinly.pins.v2';
 const LS_SELF   = 'pinly.self.v1';
 const SEED_FLAG = 'pinly.seed.v3';
 const BC_NAME   = 'pinly.bc.v1';
-
-const EXPIRE_SEC = 48 * 3600;
 
 export class PinStore extends EventTarget {
   constructor() {
@@ -50,9 +29,8 @@ export class PinStore extends EventTarget {
     this._recentLocalOps = new Map(); // id -> expiresAtMs (echo guard)
   }
 
-  /* ==================== init ==================== */
   async init() {
-    // 1. localStorage first — instant render
+    // 1. localStorage first
     this._loadLS().forEach((p) => this.pins.set(p.id, p));
 
     // 2. Supabase
@@ -66,6 +44,7 @@ export class PinStore extends EventTarget {
           if (existing) norm.myReactions = existing.myReactions;
           this.pins.set(norm.id, norm);
         });
+        
         this._saveLS();
         this.supabaseSubscription = subscribeToSupabasePins((payload) => {
           this._onSupabaseChange(payload);
@@ -76,7 +55,7 @@ export class PinStore extends EventTarget {
     }
 
     // 3. Seed pins on first visit
-    if (!localStorage.getItem(SEED_FLAG)) {
+    if (!localStorage.getItem(SEED_FLAG) || this.pins.size === 0) {
       try {
         const url = new URL('./pins.json', document.baseURI).toString();
         const res = await fetch(url, { cache: 'no-cache' });
@@ -96,9 +75,7 @@ export class PinStore extends EventTarget {
       } catch {}
     }
 
-    // 4. Refresh seed timestamps
     this._refreshSeedTimestamps();
-
     this._emit('ready', { count: this.pins.size });
   }
 
@@ -125,21 +102,17 @@ export class PinStore extends EventTarget {
     } catch {}
   }
 
-  /* ==================== self id ==================== */
   _loadSelf() {
     try {
       const s = JSON.parse(localStorage.getItem(LS_SELF) || '{}');
       if (s && s.id) return s;
     } catch {}
-    const id = 'u_' + (crypto.randomUUID
-      ? crypto.randomUUID().slice(0, 8)
-      : Math.random().toString(36).slice(2, 10));
+    const id = 'u_' + (crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10));
     const fresh = { id, joinedAt: Date.now() };
     localStorage.setItem(LS_SELF, JSON.stringify(fresh));
     return fresh;
   }
 
-  /* ==================== LS ==================== */
   _loadLS() {
     try {
       const raw = localStorage.getItem(LS_KEY);
@@ -175,7 +148,6 @@ export class PinStore extends EventTarget {
     };
   }
 
-  /* ==================== local-op echo guard ==================== */
   _markLocalOp(id) {
     this._recentLocalOps.set(id, Date.now() + 5000);
     if (this._recentLocalOps.size > 64) {
@@ -190,7 +162,6 @@ export class PinStore extends EventTarget {
     return true;
   }
 
-  /* ==================== public API ==================== */
   list() { return Array.from(this.pins.values()); }
   get(id) { return this.pins.get(id); }
 
@@ -209,6 +180,7 @@ export class PinStore extends EventTarget {
     if (this.supabase) {
       this._markLocalOp(pin.id);
       insertPinToSupabase(pin).catch(() => {});
+      broadcastPinChange('INSERT', pin);
     }
 
     this._emit('add', pin);
@@ -233,104 +205,31 @@ export class PinStore extends EventTarget {
     if (this.supabase) {
       this._markLocalOp(p.id);
       updatePinInSupabase(id, { reactions: p.reactions }).catch(() => {});
+      broadcastPinChange('UPDATE', p);
     }
+
     this._emit('update', p);
     this._broadcast({ t: 'update', pin: p });
     return p;
   }
 
-  report(id) {
-    const p = this.pins.get(id);
-    if (!p) return;
-    p._reported = true;
-    p._reportCount = (p._reportCount || 0) + 1;
-    this._saveLS();
-    if (this.supabase) {
-      this._markLocalOp(id);
-      updatePinInSupabase(id, { _reported: true, _reportCount: p._reportCount }).catch(() => {});
-    }
-    this._emit('update', p);
-  }
-
   removeOwn(id) {
     const p = this.pins.get(id);
-    if (!p) return false;
-    if (p.author !== this.self.id) return false;
+    if (!p || p.author !== this.self.id) return false;
     this.pins.delete(id);
     this._saveLS();
+
     if (this.supabase) {
       this._markLocalOp(id);
       deletePinFromSupabase(id).catch(() => {});
+      broadcastPinChange('DELETE', { id });
     }
-    this._emit('delete', p);
+
+    this._emit('delete', { id });
     this._broadcast({ t: 'delete', id });
     return true;
   }
 
-  clearLocal() {
-    try {
-      localStorage.removeItem(LS_KEY);
-      localStorage.removeItem(SEED_FLAG);
-    } catch {}
-    this.pins.clear();
-    this._emit('reset', null);
-  }
-
-  /* ==================== queries ==================== */
-  hot(limit = 25) {
-    const now = Math.floor(Date.now() / 1000);
-    return this._visible()
-      .map((p) => {
-        const reactSum = Object.values(p.reactions || {}).reduce((a, b) => a + b, 0);
-        const ageHrs   = Math.max(0.5, (now - p.ts) / 3600);
-        const score    = (reactSum + 1) / Math.pow(ageHrs, 0.5);
-        return { p, score };
-      })
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit)
-      .map((x) => x.p);
-  }
-
-  newest(limit = 25) {
-    return this._visible().sort((a, b) => b.ts - a.ts).slice(0, limit);
-  }
-
-  myPins() {
-    return this.list()
-      .filter((p) => p.author === this.self.id && !p._hidden)
-      .sort((a, b) => b.ts - a.ts);
-  }
-
-  filter({ cat = 'all', q = '' } = {}) {
-    const ql = (q || '').trim().toLowerCase();
-    return this._visible().filter((p) => {
-      if (cat !== 'all' && p.cat !== cat) return false;
-      if (!ql) return true;
-      return p.text.toLowerCase().includes(ql) || (p.loc || '').toLowerCase().includes(ql);
-    });
-  }
-
-  _visible() {
-    const now = Math.floor(Date.now() / 1000);
-    return this.list().filter((p) => {
-      if (p._reported || p._hidden) return false;
-      if (!p.official && now - p.ts > EXPIRE_SEC) return false;
-      return true;
-    });
-  }
-
-  totals() {
-    const now = Math.floor(Date.now() / 1000);
-    let visible = 0, mine = 0;
-    for (const p of this.pins.values()) {
-      const expired = !p.official && now - p.ts > EXPIRE_SEC;
-      if (!p._reported && !p._hidden && !expired) visible++;
-      if (p.author === this.self.id && !p._hidden) mine++;
-    }
-    return { all: this.pins.size, visible, mine };
-  }
-
-  /* ==================== BroadcastChannel ==================== */
   _broadcast(msg) {
     if (!this.bc) return;
     try { this.bc.postMessage(msg); } catch {}
@@ -346,44 +245,49 @@ export class PinStore extends EventTarget {
       }
     } else if (msg.t === 'update' && msg.pin) {
       const p = this._normalize(msg.pin);
-      const ex = this.pins.get(p.id);
-      if (ex) p.myReactions = ex.myReactions;
       this.pins.set(p.id, p);
       this._saveLS();
       this._emit('update', p);
     } else if (msg.t === 'delete' && msg.id) {
-      const p = this.pins.get(msg.id);
-      if (p) {
-        this.pins.delete(msg.id);
-        this._saveLS();
-        this._emit('delete', p);
-      }
+      this.pins.delete(msg.id);
+      this._saveLS();
+      this._emit('delete', { id: msg.id });
     }
   }
 
-  /* ==================== Supabase realtime ==================== */
   _onSupabaseChange(payload) {
-    if (!payload) return;
-    const { eventType, new: n, old: o } = payload;
+    const { eventType, new: newRecord, old: oldRecord, pins: polledPins } = payload;
+    
+    if (eventType === 'POLL' && Array.isArray(polledPins)) {
+      let changed = false;
+      polledPins.forEach((p) => {
+        const norm = this._normalize(p);
+        const ex = this.pins.get(norm.id);
+        if (!ex || JSON.stringify(ex) !== JSON.stringify(norm)) {
+          if (ex) norm.myReactions = ex.myReactions;
+          this.pins.set(norm.id, norm);
+          changed = true;
+          this._emit(ex ? 'update' : 'add', norm);
+        }
+      });
+      if (changed) this._saveLS();
+      return;
+    }
+
+    const id = newRecord?.id || oldRecord?.id;
+    if (!id || this._isLocalEcho(id)) return;
 
     if (eventType === 'INSERT' || eventType === 'UPDATE') {
-      if (!n) return;
-      if (this._isLocalEcho(n.id)) return;
-      const p = this._normalize(n);
-      const ex = this.pins.get(p.id);
-      if (ex) p.myReactions = ex.myReactions;
-      const wasNew = !ex;
-      this.pins.set(p.id, p);
+      const norm = this._normalize(newRecord);
+      const ex = this.pins.get(norm.id);
+      if (ex) norm.myReactions = ex.myReactions;
+      this.pins.set(norm.id, norm);
       this._saveLS();
-      this._emit(wasNew ? 'add' : 'update', p);
-    } else if (eventType === 'DELETE' && o) {
-      if (this._isLocalEcho(o.id)) return;
-      const ex = this.pins.get(o.id);
-      if (ex) {
-        this.pins.delete(o.id);
-        this._saveLS();
-        this._emit('delete', ex);
-      }
+      this._emit(eventType === 'INSERT' ? 'add' : 'update', norm);
+    } else if (eventType === 'DELETE') {
+      this.pins.delete(id);
+      this._saveLS();
+      this._emit('delete', { id });
     }
   }
 
@@ -391,5 +295,3 @@ export class PinStore extends EventTarget {
     this.dispatchEvent(new CustomEvent(type, { detail }));
   }
 }
-
-export const EXPIRE_SECONDS = EXPIRE_SEC;

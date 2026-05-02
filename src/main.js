@@ -71,6 +71,8 @@ async function boot() {
   }
 
   applyURLState();
+  window.STATE = STATE;
+  console.log('[Pinly] STATE exposed to window.STATE');
 }
 
 /* ---------------- Theme ---------------- */
