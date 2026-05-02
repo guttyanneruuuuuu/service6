@@ -6,8 +6,9 @@
  */
 
 // Initialize Supabase client
-const SUPABASE_URL = 'https://ebpkewkqorvditwhgzuh.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_hH1Z65DBq4Zg0kVFSy-CuA_9BC1uuYS';
+// Prioritize settings from window.PINLY_SUPABASE (set in index.html)
+const SUPABASE_URL = window.PINLY_SUPABASE?.url || 'https://ebpkewkqorvditwhgzuh.supabase.co';
+const SUPABASE_ANON_KEY = window.PINLY_SUPABASE?.key || 'sb_publishable_hH1Z65DBq4Zg0kVFSy-CuA_9BC1uuYS';
 
 // Check if Supabase is available
 let supabaseClient = null;
@@ -118,16 +119,26 @@ async function deletePinFromSupabase(id) {
 function subscribeToSupabasePins(callback) {
   if (!supabaseClient) return null;
   
-  return supabaseClient
-    .channel('pins-changes')
+  // Create a channel for real-time updates
+  const channel = supabaseClient
+    .channel('pins-realtime')
     .on(
       'postgres_changes',
-      { event: '*', schema: 'public', table: 'pins' },
+      { 
+        event: '*', 
+        schema: 'public', 
+        table: 'pins' 
+      },
       (payload) => {
+        console.log('Real-time update received:', payload);
         callback(payload);
       }
     )
-    .subscribe();
+    .subscribe((status) => {
+      console.log('Supabase real-time subscription status:', status);
+    });
+
+  return channel;
 }
 
 export {
