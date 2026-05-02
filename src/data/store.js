@@ -29,12 +29,14 @@
  *   }
  */
 
-import { 
-  initSupabase, 
-  fetchPinsFromSupabase, 
+import {
+  initSupabase,
+  fetchPinsFromSupabase,
   insertPinToSupabase,
   updatePinInSupabase,
-  subscribeToSupabasePins 
+  deletePinFromSupabase,
+  subscribeToSupabasePins,
+  broadcastPin,
 } from './supabase.js';
 
 const LS_KEY = 'pinly.pins.v1';
@@ -60,7 +62,7 @@ export class PinStore extends EventTarget {
 
     // 2. Initialize Supabase
     this.supabase = await initSupabase();
-    
+
     // 3. Sync from Supabase if available
     if (this.supabase) {
       try {
@@ -73,17 +75,25 @@ export class PinStore extends EventTarget {
             this.pins.set(normalized.id, normalized);
           }
         });
-        
+
         // Save back to LS after sync
         this._saveLS();
-        
-        // Subscribe to real-time updates
+
+        // Subscribe to real-time updates (postgres_changes + broadcast)
         this.supabaseSubscription = subscribeToSupabasePins((payload) => {
           this._onSupabaseChange(payload);
         });
-        console.log('Supabase real-time subscription active');
+        console.log('[Pinly] Supabase real-time subscription active');
+
+        // Polling fallback (every 20s) — works even if realtime is disabled
+        // on the Supabase project. Cheap, small payload, public read.
+        this._pollTimer = setInterval(() => this._pollRemote(), 20000);
+        // Also sync when the tab becomes visible again
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') this._pollRemote();
+        });
       } catch (err) {
-        console.warn('Supabase sync failed, using local storage:', err);
+        console.warn('[Pinly] Supabase sync failed, using local storage:', err);
       }
     }
     
@@ -176,15 +186,90 @@ export class PinStore extends EventTarget {
     });
     this.pins.set(pin.id, pin);
     this._saveLS();
-    
-    // Save to Supabase
+
+    // Save to Supabase + broadcast (myReactions is local-only)
     if (this.supabase) {
-      insertPinToSupabase(pin).catch(err => console.error('Failed to save to Supabase:', err));
+      const remotePin = { ...pin };
+      delete remotePin.myReactions;
+      insertPinToSupabase(remotePin).catch((err) => console.error('[Pinly] Failed to save pin:', err));
+      if (this.supabaseSubscription) {
+        broadcastPin(this.supabaseSubscription, 'add', remotePin);
+      }
     }
-    
+
     this._emit('add', pin);
     this._broadcast({ t: 'add', pin });
     return pin;
+  }
+
+  removeOwn(id) {
+    const p = this.pins.get(id);
+    if (!p || p.author !== this.self.id) return false;
+    this.pins.delete(id);
+    this._saveLS();
+    if (this.supabase) {
+      deletePinFromSupabase(id).catch((err) => console.error('[Pinly] Failed to delete:', err));
+      if (this.supabaseSubscription) {
+        broadcastPin(this.supabaseSubscription, 'delete', { id });
+      }
+    }
+    this._broadcast({ t: 'delete', id });
+    this._emit('delete', { id });
+    return true;
+  }
+
+  myPins() {
+    return this.list()
+      .filter((p) => p.author === this.self.id)
+      .sort((a, b) => b.ts - a.ts);
+  }
+
+  totals() {
+    const all = this.list();
+    const visible = all.filter((p) => !p._reported && !p._hidden).length;
+    const mine = all.filter((p) => p.author === this.self.id).length;
+    return { visible, mine, total: all.length };
+  }
+
+  clearLocal() {
+    try { localStorage.removeItem(LS_KEY); } catch {}
+    try { localStorage.removeItem(LS_SELF); } catch {}
+    try { localStorage.removeItem(SEED_FLAG); } catch {}
+    this.pins.clear();
+  }
+
+  async _pollRemote() {
+    if (!this.supabase) return;
+    try {
+      const remotePins = await fetchPinsFromSupabase();
+      let changed = false;
+      const remoteIds = new Set();
+      for (const raw of remotePins) {
+        const p = this._normalize(raw);
+        remoteIds.add(p.id);
+        const existing = this.pins.get(p.id);
+        if (!existing) {
+          this.pins.set(p.id, p);
+          changed = true;
+          this._emit('add', p);
+        } else if (
+          p.ts !== existing.ts ||
+          JSON.stringify(p.reactions) !== JSON.stringify(existing.reactions)
+        ) {
+          // preserve myReactions (local only)
+          p.myReactions = existing.myReactions;
+          this.pins.set(p.id, p);
+          changed = true;
+          this._emit('update', p);
+        }
+      }
+      if (changed) {
+        this._saveLS();
+        this._emit('refresh', { count: this.pins.size });
+      }
+    } catch (err) {
+      console.warn('[Pinly] poll failed:', err);
+    }
   }
 
   react(id, emoji) {
@@ -200,12 +285,18 @@ export class PinStore extends EventTarget {
       p.reactions[emoji] = (p.reactions[emoji] || 0) + 1;
     }
     this._saveLS();
-    
-    // Update in Supabase
+
+    // Update in Supabase + broadcast
     if (this.supabase) {
-      updatePinInSupabase(id, { reactions: p.reactions }).catch(err => console.error('Failed to update reactions:', err));
+      updatePinInSupabase(id, { reactions: p.reactions })
+        .catch((err) => console.error('[Pinly] Failed to update reactions:', err));
+      if (this.supabaseSubscription) {
+        const remotePin = { ...p };
+        delete remotePin.myReactions;
+        broadcastPin(this.supabaseSubscription, 'update', remotePin);
+      }
     }
-    
+
     this._emit('update', p);
     this._broadcast({ t: 'update', pin: p });
     return p;
@@ -301,30 +392,47 @@ export class PinStore extends EventTarget {
       }
     } else if (msg.t === 'update' && msg.pin) {
       const p = this._normalize(msg.pin);
+      // preserve myReactions from local
+      const existing = this.pins.get(p.id);
+      if (existing) p.myReactions = existing.myReactions;
       this.pins.set(p.id, p);
       this._saveLS();
       this._emit('update', p);
+    } else if (msg.t === 'delete' && msg.id) {
+      if (this.pins.delete(msg.id)) {
+        this._saveLS();
+        this._emit('delete', { id: msg.id });
+      }
     }
   }
 
   /* ---------- Supabase handlers ---------- */
   _onSupabaseChange(payload) {
-    // Handle real-time updates from Supabase
+    // Handle real-time updates from Supabase (postgres_changes or broadcast)
     const { eventType, new: newRecord, old: oldRecord } = payload;
-    
+
     if (eventType === 'INSERT' || eventType === 'UPDATE') {
+      if (!newRecord) return;
       const p = this._normalize(newRecord);
-      // Avoid unnecessary updates if we already have this exact state
       const existing = this.pins.get(p.id);
-      if (existing && JSON.stringify(existing) === JSON.stringify(p)) return;
+
+      // Skip if it's our own pin already in local (avoid echo overwrites)
+      if (existing) {
+        // preserve local-only myReactions
+        p.myReactions = existing.myReactions;
+        if (JSON.stringify(existing) === JSON.stringify(p)) return;
+      }
 
       this.pins.set(p.id, p);
       this._saveLS();
-      this._emit(eventType === 'INSERT' ? 'add' : 'update', p);
+      this._emit(eventType === 'INSERT' && !existing ? 'add' : 'update', p);
     } else if (eventType === 'DELETE') {
-      this.pins.delete(oldRecord.id);
-      this._saveLS();
-      this._emit('delete', oldRecord);
+      const id = oldRecord && oldRecord.id;
+      if (!id) return;
+      if (this.pins.delete(id)) {
+        this._saveLS();
+        this._emit('delete', { id });
+      }
     }
   }
 

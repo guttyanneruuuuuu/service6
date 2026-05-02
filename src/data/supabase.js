@@ -20,14 +20,21 @@ async function initSupabase() {
       return null;
     }
 
-    // Dynamically import Supabase client
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
-    
-    supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('Supabase initialized');
+    // Dynamically import Supabase client from esm.sh (matches CSP)
+    const mod = await import('https://esm.sh/@supabase/supabase-js@2.45.4?bundle');
+    const createClient = mod.createClient || (mod.default && mod.default.createClient);
+    if (typeof createClient !== 'function') {
+      throw new Error('Supabase createClient not found in module');
+    }
+
+    supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      realtime: { params: { eventsPerSecond: 10 } },
+    });
+    console.log('[Pinly] Supabase initialized:', SUPABASE_URL);
     return supabaseClient;
   } catch (err) {
-    console.warn('Supabase initialization failed:', err);
+    console.warn('[Pinly] Supabase initialization failed:', err);
     return null;
   }
 }
@@ -114,31 +121,62 @@ async function deletePinFromSupabase(id) {
 }
 
 /**
- * Subscribe to real-time pin updates
+ * Subscribe to real-time pin updates.
+ * Combines:
+ *  - postgres_changes (DB level INSERT/UPDATE/DELETE)
+ *  - broadcast channel (cross-device fallback when pg replication is OFF)
  */
 function subscribeToSupabasePins(callback) {
   if (!supabaseClient) return null;
-  
-  // Create a channel for real-time updates
+
   const channel = supabaseClient
-    .channel('pins-realtime')
+    .channel('pins-realtime', {
+      config: { broadcast: { self: false }, presence: { key: '' } },
+    })
     .on(
       'postgres_changes',
-      { 
-        event: '*', 
-        schema: 'public', 
-        table: 'pins' 
-      },
+      { event: '*', schema: 'public', table: 'pins' },
       (payload) => {
-        console.log('Real-time update received:', payload);
+        console.log('[Pinly] postgres_changes:', payload.eventType);
         callback(payload);
       }
     )
-    .subscribe((status) => {
-      console.log('Supabase real-time subscription status:', status);
+    .on('broadcast', { event: 'pin' }, ({ payload }) => {
+      if (!payload || !payload.t) return;
+      console.log('[Pinly] broadcast:', payload.t);
+      if (payload.t === 'add' && payload.pin) {
+        callback({ eventType: 'INSERT', new: payload.pin, old: null });
+      } else if (payload.t === 'update' && payload.pin) {
+        callback({ eventType: 'UPDATE', new: payload.pin, old: null });
+      } else if (payload.t === 'delete' && payload.pin) {
+        callback({ eventType: 'DELETE', new: null, old: payload.pin });
+      }
+    })
+    .subscribe((status, err) => {
+      console.log('[Pinly] realtime status:', status, err || '');
     });
 
   return channel;
+}
+
+/**
+ * Send broadcast message (cross-device sync without pg replication).
+ */
+async function broadcastPin(channel, type, pin) {
+  if (!channel) return;
+  try {
+    await channel.send({
+      type: 'broadcast',
+      event: 'pin',
+      payload: { t: type, pin },
+    });
+  } catch (err) {
+    console.warn('[Pinly] broadcast send failed:', err);
+  }
+}
+
+function getSupabaseClient() {
+  return supabaseClient;
 }
 
 export {
@@ -148,4 +186,6 @@ export {
   updatePinInSupabase,
   deletePinFromSupabase,
   subscribeToSupabasePins,
+  broadcastPin,
+  getSupabaseClient,
 };
