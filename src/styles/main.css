@@ -746,6 +746,14 @@ button, input, textarea, select { font-family: inherit; color: inherit; }
   background: var(--gradient-brand-strong); color: #fff; border-color: transparent;
   box-shadow: 0 4px 10px rgba(255, 31, 109, 0.30);
 }
+.reaction-btn.is-reacting {
+  animation: reactionPulse 0.4s var(--ease-spring);
+}
+@keyframes reactionPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
 .reaction-btn__count { font-size: 12px; opacity: .9; font-variant-numeric: tabular-nums; }
 .reaction-btn--add {
   background: transparent; border-style: dashed; color: var(--text-mute);

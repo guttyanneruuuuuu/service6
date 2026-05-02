@@ -71,8 +71,6 @@ async function boot() {
   }
 
   applyURLState();
-  window.STATE = STATE;
-  console.log('[Pinly] STATE exposed to window.STATE');
 }
 
 /* ---------------- Theme ---------------- */
@@ -849,7 +847,9 @@ function buildReactionBtn(pinId, emoji, count, mine, isAdd) {
     const now = Date.now();
     if (now - STATE.reactDebounceTs < 250) return;
     STATE.reactDebounceTs = now;
+    btn.classList.add('is-reacting');
     STATE.store.react(pinId, emoji);
+    setTimeout(() => btn.classList.remove('is-reacting'), 400);
   });
   return btn;
 }
