@@ -158,8 +158,11 @@ function initUI() {
   initSidePanels();
   initMenu();
   initMyPins();
+  initLogin();
+  initConnectionPill();
   initKeyboardShortcuts();
   initThemeButton();
+  refreshAuthUI();
 }
 
 function initCategoryBar() {
@@ -391,7 +394,7 @@ function initIntro() {
   const introGo = document.getElementById('introGo');
   const agree   = document.getElementById('introAgree');
   if (introGo) {
-    introGo.addEventListener('click', () => {
+    introGo.addEventListener('click', async () => {
       if (agree && !agree.checked) {
         showToast('利用規約への同意が必要です', 'err');
         return;
@@ -399,6 +402,15 @@ function initIntro() {
       const el = document.getElementById('intro');
       if (el) el.hidden = true;
       try { localStorage.setItem(INTRO_KEY, '1'); } catch {}
+      // Auto-login anonymously on first run so the user immediately gets
+      // real-time sync without an extra step. Failure is silent — they can
+      // still use the app in local-only mode.
+      try {
+        if (STATE.store && STATE.store.getUser && STATE.store.getUser().isLocalOnly) {
+          await STATE.store.signInAnonymously();
+          refreshAuthUI();
+        }
+      } catch { /* graceful */ }
     });
   }
 }
@@ -470,25 +482,204 @@ function initMenu() {
         localStorage.removeItem('pinly.ratelimit.v2');
         localStorage.removeItem('pinly.ratelimit.reports.v1');
         localStorage.removeItem(REPORTED_LOCAL_KEY);
+        localStorage.removeItem('pinly.profile.v1');
       } catch {}
       location.reload();
     }
+  });
+
+  // Login / Logout buttons in menu
+  document.getElementById('menuLogin')?.addEventListener('click', () => {
+    closeMenu();
+    openLoginSheet();
+  });
+  document.getElementById('menuLogout')?.addEventListener('click', async () => {
+    if (!confirm('ログアウトしますか？\nログアウトしてもローカルに保存された投稿は消えません。')) return;
+    try { await STATE.store.signOut(); } catch {}
+    refreshAuthUI();
+    showToast('ログアウトしました', 'ok');
+    closeMenu();
   });
 }
 
 function openMenu() {
   const m = document.getElementById('menu');
   if (!m || !STATE.store) return;
+  refreshAuthUI();
   const totals = STATE.store.totals();
   const myReactSum = STATE.store.list()
     .filter((p) => p.author === STATE.store.self.id)
     .reduce((acc, p) => acc + Object.values(p.reactions || {}).reduce((a, b) => a + b, 0), 0);
 
-  const idEl   = document.getElementById('menuUserId');
   const statEl = document.getElementById('menuUserStat');
-  if (idEl)   idEl.textContent   = STATE.store.self.id;
   if (statEl) statEl.textContent = `${totals.mine} 投稿 ・ 🔥 ${myReactSum} 反応`;
   m.hidden = false;
+}
+
+/* ---------- Auth UI ---------- */
+function refreshAuthUI() {
+  if (!STATE.store) return;
+  const user = STATE.store.getUser ? STATE.store.getUser() : { id: STATE.store.self.id, isAnonymous: true, isLocalOnly: true, displayName: '匿名さん' };
+
+  const idEl = document.getElementById('menuUserId');
+  if (idEl) {
+    const shortId = (user.id || '').slice(0, 10) + ((user.id || '').length > 10 ? '…' : '');
+    idEl.textContent = user.displayName || shortId || '匿名';
+  }
+
+  const stateEl = document.getElementById('menuAuthState');
+  if (stateEl) {
+    if (user.isLocalOnly) {
+      stateEl.textContent = '🔒 ローカル専用（ログインで他の人にも届きます）';
+      stateEl.dataset.state = 'local';
+    } else if (user.isAnonymous) {
+      stateEl.textContent = '🌐 匿名ログイン中（リアルタイム同期ON）';
+      stateEl.dataset.state = 'anon';
+    } else {
+      stateEl.textContent = '✅ メールサインイン中';
+      stateEl.dataset.state = 'email';
+    }
+  }
+
+  const loginBtn = document.getElementById('menuLogin');
+  const loginLbl = document.getElementById('menuLoginLabel');
+  const logoutBtn = document.getElementById('menuLogout');
+  if (loginBtn && logoutBtn && loginLbl) {
+    if (user.isLocalOnly) {
+      loginBtn.hidden = false;
+      logoutBtn.hidden = true;
+      loginLbl.textContent = 'ログイン / サインアップ';
+    } else {
+      // Show "switch account" but keep logout visible
+      loginBtn.hidden = false;
+      logoutBtn.hidden = false;
+      loginLbl.textContent = 'アカウントを切り替える';
+    }
+  }
+}
+
+function initLogin() {
+  document.querySelectorAll('[data-close-login]').forEach((el) =>
+    el.addEventListener('click', closeLoginSheet));
+
+  const anonBtn = document.getElementById('loginAnon');
+  if (anonBtn) anonBtn.addEventListener('click', async () => {
+    if (!STATE.store) return;
+    setLoginMsg('匿名ログイン中…', 'info');
+    anonBtn.disabled = true;
+    try {
+      await STATE.store.signInAnonymously();
+      setLoginMsg('ログインしました！🎉 投稿がリアルタイムで世界に届きます。', 'ok');
+      refreshAuthUI();
+      setTimeout(() => closeLoginSheet(), 900);
+      showToast('ログイン完了 🌐 リアルタイム同期ON', 'ok');
+    } catch (err) {
+      const msg = (err && err.message) || '匿名ログインに失敗しました。Supabase 側の設定をご確認ください。';
+      setLoginMsg(msg + '（オフラインでも投稿はできますが、他の人には届きません）', 'err');
+    } finally {
+      anonBtn.disabled = false;
+    }
+  });
+
+  const emailBtn = document.getElementById('loginEmailBtn');
+  const emailInput = document.getElementById('loginEmail');
+  if (emailBtn && emailInput) {
+    const submit = async () => {
+      const value = (emailInput.value || '').trim();
+      if (!value) {
+        setLoginMsg('メールアドレスを入力してください。', 'err');
+        return;
+      }
+      setLoginMsg('メールを送信しています…', 'info');
+      emailBtn.disabled = true;
+      try {
+        const res = await STATE.store.signInWithEmail(value);
+        setLoginMsg(res.message || '送信しました。', res.ok ? 'ok' : 'err');
+        if (res.ok) {
+          // Clear field after successful send (don't keep PII in DOM)
+          emailInput.value = '';
+        }
+      } finally {
+        emailBtn.disabled = false;
+      }
+    };
+    emailBtn.addEventListener('click', submit);
+    emailInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); submit(); }
+    });
+  }
+}
+
+function openLoginSheet() {
+  const sheet = document.getElementById('loginSheet');
+  if (sheet) sheet.hidden = false;
+  setLoginMsg('', 'info');
+}
+function closeLoginSheet() {
+  const sheet = document.getElementById('loginSheet');
+  if (sheet) sheet.hidden = true;
+}
+function setLoginMsg(msg, type) {
+  const el = document.getElementById('loginMsg');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.dataset.tone = type || 'info';
+}
+
+/* ---------- Connection pill ---------- */
+function initConnectionPill() {
+  const pill = document.getElementById('connPill');
+  const text = document.getElementById('connPillText');
+  if (!pill || !text || !STATE.store) return;
+
+  let lastShown = 0;
+  const update = (status, presenceCount) => {
+    pill.dataset.state = status;
+    if (status === 'connected') {
+      const n = presenceCount != null ? presenceCount : STATE.store.presenceCount();
+      text.textContent = n > 1 ? `🌐 ${n}人がオンライン` : '🌐 リアルタイム同期ON';
+      pill.hidden = false;
+      // Auto-fade after a moment if everything is fine
+      lastShown = Date.now();
+      setTimeout(() => {
+        if (pill.dataset.state === 'connected' && Date.now() - lastShown > 2200) {
+          pill.classList.add('conn-pill--fade');
+        }
+      }, 2400);
+    } else if (status === 'connecting') {
+      text.textContent = '🔄 接続中…';
+      pill.classList.remove('conn-pill--fade');
+      pill.hidden = false;
+    } else if (status === 'offline') {
+      text.textContent = '⚠️ オフライン（投稿は端末に保存されます）';
+      pill.classList.remove('conn-pill--fade');
+      pill.hidden = false;
+    }
+  };
+
+  STATE.store.addEventListener('connection', (e) => {
+    const s = e.detail && e.detail.status;
+    if (s === 'SUBSCRIBED') update('connected');
+    else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') update('offline');
+    else update('connecting');
+  });
+  STATE.store.addEventListener('presence', (e) => {
+    update('connected', e.detail && e.detail.count);
+  });
+  STATE.store.addEventListener('auth', () => refreshAuthUI());
+  STATE.store.addEventListener('warning', (e) => {
+    const code = e.detail && e.detail.code;
+    if (code === 'cloud_insert_failed') {
+      showToast('⚠️ 投稿が他の人に届かない可能性があります。ログインを試してください。', 'err');
+    }
+  });
+
+  // Show initial state
+  if (STATE.store.isCloudConnected && STATE.store.isCloudConnected()) {
+    update('connecting');
+  } else {
+    update('offline');
+  }
 }
 
 function closeMenu() {
@@ -578,7 +769,9 @@ function initKeyboardShortcuts() {
     const composeEl = document.getElementById('composeSheet');
     const menuEl = document.getElementById('menu');
     const myPinsEl = document.getElementById('myPins');
-    if (detailEl && !detailEl.hidden) closeDetail();
+    const loginEl = document.getElementById('loginSheet');
+    if (loginEl && !loginEl.hidden) closeLoginSheet();
+    else if (detailEl && !detailEl.hidden) closeDetail();
     else if (composeEl && !composeEl.hidden) closeCompose();
     else if (menuEl && !menuEl.hidden) closeMenu();
     else if (myPinsEl && !myPinsEl.hidden) myPinsEl.hidden = true;
@@ -726,6 +919,27 @@ async function submitPin() {
 
   if (!confirm('この内容で投稿しますか？\n\n「' + text + '」\n\n※誹謗中傷・個人情報は禁止されています。\n※48時間で自動的に消えます。')) {
     return;
+  }
+
+  // Encourage login if currently local-only — otherwise nobody else will see the pin.
+  const u = STATE.store.getUser ? STATE.store.getUser() : null;
+  if (u && u.isLocalOnly) {
+    const wantLogin = confirm(
+      '⚠️ ログインしていないため、投稿は端末内にだけ保存され、他の人には届きません。\n\n' +
+      '今すぐ「匿名のままログイン」して、リアルタイム共有を有効にしますか？\n\n' +
+      '・名前やメール不要\n' +
+      '・1タップで完了\n' +
+      '・キャンセルしてもこの投稿はローカルに保存されます'
+    );
+    if (wantLogin) {
+      try {
+        await STATE.store.signInAnonymously();
+        refreshAuthUI();
+        showToast('ログインしました 🌐 投稿します…', 'ok');
+      } catch (err) {
+        showToast('ログインに失敗しましたが、ローカルに保存します', 'info');
+      }
+    }
   }
 
   if (!STATE.composeLngLat || !Array.isArray(STATE.composeLngLat) || STATE.composeLngLat.length !== 2) {

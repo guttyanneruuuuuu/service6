@@ -4,7 +4,7 @@
    - Map tiles still use stale-while-revalidate
    - Supabase / GA / esm.sh requests are NEVER cached (always live)
 */
-const VERSION = 'pinly-v6-2026-05-02';
+const VERSION = 'pinly-v7-2026-05-03';
 const CORE = [
   './',
   './index.html',

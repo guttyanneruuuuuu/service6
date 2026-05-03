@@ -1516,3 +1516,196 @@ body:has(.menu:not([hidden])),
 body:has(.intro:not([hidden])) {
   overflow: hidden;
 }
+
+/* ============================================================
+   Login sheet
+   ============================================================ */
+.login__panel {
+  max-width: 440px;
+  text-align: center;
+  padding: 24px 22px calc(24px + var(--safe-bottom));
+}
+.login__brand {
+  font-size: 44px;
+  margin: 4px 0 10px;
+  filter: drop-shadow(0 4px 14px rgba(255,31,109,0.30));
+}
+.login__title {
+  font-size: 22px;
+  font-weight: 900;
+  margin: 0 0 8px;
+  background: var(--gradient-brand-strong);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.login__lead {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  line-height: 1.7;
+  margin: 0 0 18px;
+}
+.login__lead b { color: var(--pink-strong); }
+
+.login__group {
+  text-align: left;
+  margin: 0 0 14px;
+}
+.login__label {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-dim);
+  margin: 0 0 6px;
+}
+.login__input {
+  display: block; width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--line);
+  background: var(--bg-input);
+  font-size: 15px; font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.login__input:focus {
+  outline: none;
+  border-color: var(--pink-strong);
+  box-shadow: 0 0 0 4px rgba(255,31,109,0.16);
+}
+.login__hint {
+  font-size: 11px;
+  color: var(--text-mute);
+  font-weight: 600;
+  margin: 4px 2px 0;
+  line-height: 1.5;
+}
+.login__divider {
+  display: flex; align-items: center; gap: 10px;
+  margin: 14px 0;
+  font-size: 11px; font-weight: 700;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.login__divider::before,
+.login__divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: var(--line-strong);
+}
+.login__msg {
+  font-size: 12px;
+  font-weight: 700;
+  margin: 12px 4px 6px;
+  min-height: 1.4em;
+  line-height: 1.5;
+}
+.login__msg[data-tone="ok"]   { color: var(--green); }
+.login__msg[data-tone="err"]  { color: var(--red); }
+.login__msg[data-tone="info"] { color: var(--text-dim); }
+
+.login__legal {
+  font-size: 11px;
+  color: var(--text-mute);
+  font-weight: 600;
+  margin: 14px 0 0;
+  line-height: 1.6;
+}
+.login__legal a { color: var(--pink-strong); font-weight: 800; }
+
+.btn--block {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* ============================================================
+   Connection pill (live status)
+   ============================================================ */
+.conn-pill {
+  position: fixed;
+  top: calc(var(--safe-top) + 64px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-panel-strong);
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+  border: 1.5px solid var(--line-strong);
+  box-shadow: var(--shadow-md);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text);
+  z-index: 50;
+  pointer-events: none;
+  transition: opacity var(--dur-slow) var(--ease), transform var(--dur) var(--ease);
+}
+.conn-pill__dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--text-mute);
+  box-shadow: 0 0 0 0 currentColor;
+}
+.conn-pill[data-state="connected"] .conn-pill__dot {
+  background: var(--green);
+  animation: connPulse 2s ease-in-out infinite;
+}
+.conn-pill[data-state="connecting"] .conn-pill__dot {
+  background: var(--yellow);
+  animation: connBlink 1s ease-in-out infinite;
+}
+.conn-pill[data-state="offline"] .conn-pill__dot {
+  background: var(--red);
+}
+.conn-pill--fade { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+@keyframes connPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(22,160,127,0.5); }
+  50%     { box-shadow: 0 0 0 8px rgba(22,160,127,0); }
+}
+@keyframes connBlink {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.4; }
+}
+
+/* ============================================================
+   Menu auth state
+   ============================================================ */
+.menu__authstate {
+  display: block;
+  margin-top: 6px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-dim);
+  border: 1.5px solid var(--line);
+  text-align: left;
+  line-height: 1.4;
+}
+.menu__authstate[data-state="anon"] {
+  color: var(--green);
+  border-color: color-mix(in srgb, var(--green) 35%, var(--line));
+  background: color-mix(in srgb, var(--green) 6%, var(--bg-input));
+}
+.menu__authstate[data-state="email"] {
+  color: var(--pink-strong);
+  border-color: color-mix(in srgb, var(--pink-strong) 35%, var(--line));
+  background: color-mix(in srgb, var(--pink-strong) 6%, var(--bg-input));
+}
+.menu__authstate[data-state="local"] {
+  color: var(--yellow);
+  border-color: color-mix(in srgb, var(--yellow) 40%, var(--line));
+  background: color-mix(in srgb, var(--yellow) 8%, var(--bg-input));
+}
+.menu__item--primary {
+  background: var(--gradient-brand-strong) !important;
+  color: var(--text-on-pink) !important;
+  font-weight: 900;
+}
+.menu__item--primary:hover { filter: brightness(1.05); }

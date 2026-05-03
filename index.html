@@ -69,9 +69,9 @@
   </script>
 
   <!-- Vite entry point -->
-  <script type="module" crossorigin src="/service6/assets/index-icJgRtel.js"></script>
+  <script type="module" crossorigin src="/service6/assets/index-D8eBEPro.js"></script>
   <link rel="modulepreload" crossorigin href="/service6/assets/maplibre-BD93s8Mz.js">
-  <link rel="stylesheet" crossorigin href="/service6/assets/index-DEe6CRa8.css">
+  <link rel="stylesheet" crossorigin href="/service6/assets/index-T_RDmYBy.css">
 </head>
 <body>
 
@@ -195,8 +195,11 @@
       <div class="menu__user">
         <span>あなた: <b id="menuUserId">匿名</b></span>
         <span id="menuUserStat" class="menu__userstat"></span>
+        <span id="menuAuthState" class="menu__authstate" aria-live="polite"></span>
       </div>
       <div class="menu__list">
+        <button id="menuLogin" class="menu__item menu__item--primary" type="button"><span aria-hidden="true">🔑</span> <span id="menuLoginLabel">ログイン / サインアップ</span></button>
+        <button id="menuLogout" class="menu__item" type="button" hidden><span aria-hidden="true">🚪</span> ログアウト</button>
         <button id="menuMyPins" class="menu__item" type="button"><span aria-hidden="true">📌</span> 自分のピン一覧</button>
         <button id="menuTrend" class="menu__item" type="button"><span aria-hidden="true">🔥</span> トレンド</button>
         <button id="menuRanking" class="menu__item" type="button"><span aria-hidden="true">🏆</span> ランキング</button>
@@ -209,6 +212,48 @@
         <button id="menuClear" class="menu__item menu__item--danger" type="button"><span aria-hidden="true">🧹</span> ローカルデータを削除</button>
       </div>
     </div>
+  </div>
+
+  <!-- Login Sheet (X-style minimal sign-in) -->
+  <div id="loginSheet" class="sheet login" hidden role="dialog" aria-modal="true" aria-label="ログイン">
+    <div class="sheet__panel login__panel">
+      <button class="sheet__close" data-close-login aria-label="閉じる">×</button>
+      <div class="login__brand" aria-hidden="true">📍</div>
+      <h2 class="login__title">Pinly にサインイン</h2>
+      <p class="login__lead">街のリアルタイムを、みんなで。<br>
+        ログインすると<b>あなたの投稿が他の人にも届きます</b>。</p>
+
+      <div class="login__group">
+        <button id="loginAnon" class="btn btn--pink btn--block" type="button">
+          <span aria-hidden="true">👤</span> 匿名のままログイン（おすすめ）
+        </button>
+        <p class="login__hint">名前もメールも不要。デバイス間で投稿が同期されます。</p>
+      </div>
+
+      <div class="login__divider"><span>または</span></div>
+
+      <div class="login__group">
+        <label for="loginEmail" class="login__label">メールアドレスでサインイン</label>
+        <input id="loginEmail" type="email" class="login__input" placeholder="you@example.com" autocomplete="email" inputmode="email" maxlength="254">
+        <button id="loginEmailBtn" class="btn btn--mute btn--block" type="button">
+          <span aria-hidden="true">✉️</span> ログインリンクを送る
+        </button>
+        <p class="login__hint">受信したメールのリンクをタップするだけ。パスワード不要です。</p>
+      </div>
+
+      <p id="loginMsg" class="login__msg" role="status" aria-live="polite"></p>
+
+      <p class="login__legal">
+        続行すると <a href="./terms.html" target="_blank" rel="noopener">利用規約</a> ・
+        <a href="./privacy.html" target="_blank" rel="noopener">プライバシー</a> に同意したものとみなされます。
+      </p>
+    </div>
+  </div>
+
+  <!-- Connection state pill -->
+  <div id="connPill" class="conn-pill" role="status" aria-live="polite" hidden>
+    <span class="conn-pill__dot" aria-hidden="true"></span>
+    <span id="connPillText">接続中…</span>
   </div>
 
   <!-- My Pins -->
@@ -229,6 +274,7 @@
       </p>
       <ul class="intro__points">
         <li>📍 地図の「+」ボタンから、いまの場所をピン留め</li>
+        <li>🌐 ログインすると <b>あなたの投稿がリアルタイムで世界に届きます</b></li>
         <li>🔥 反応・トレンドで盛り上がるピンを発見</li>
         <li>⏱️ 投稿は <b>48時間で自動的に消えます</b></li>
         <li>🛡️ 誹謗中傷・個人情報は禁止です</li>
